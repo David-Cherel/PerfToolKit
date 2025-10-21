@@ -1,0 +1,22 @@
+-Statspack finalisation 
+-creation des SQL Set : capture et observation
+-Cursor menu : show high version / memory issue 
+-Trace menu :
+	*Session
+	*TKPROF
+	*10053
+	*10053 Parser HTML
+
+
+RWP Network Latency/Throughput:
+The dbrwplt tool measures the network latency between client and an Oracle database. Moreover, dbrwplt measures and demonstrates the impact of network latency on application throughput between client and Oracle database. Basically, dbrwplt allows to understand better where is time spent outside the database the network or the application code.
+Use cases for the tool are:
+    Assessing the impact of network changes for instance moving from on premise setup to the a mixed setup on-premise app servers and the database in the cloud
+    Trouble shooting application performance top to bottom 
+    Measure ping (dpiConn_ping) time
+https://confluence.oraclecorp.com/confluence/pages/viewpage.action?pageId=2016085297
+
+ZIP :
+dbrwplt_latest.zip
+
+

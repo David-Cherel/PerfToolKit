@@ -1,0 +1,21 @@
+-- #############################################################################################################
+-- Get execution plan from AWR with SQL_ID as input
+-- #############################################################################################################
+
+-- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+-- Example : get_plan_awr.sql cm1fyt76dwbkb 
+-- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+set lines 180
+set pages 0
+define sql_id ='&1'
+define plan_hash_value ='&2'
+
+spool get_plan_awr.log
+
+Select * from table (DBMS_XPLAN.DISPLAY_WORKLOAD_REPOSITORY(sql_id=>'&sql_id',plan_hash_value =>'&plan_hash_value', format=> 'ALLSTATS +ADAPTIVE +OUTLINE'));
+
+spool off
+
+exit

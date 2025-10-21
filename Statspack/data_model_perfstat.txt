@@ -1,0 +1,309 @@
+
+####################################
+
+List of tables 
+
+##################################
+
+
+SQL> select table_name from dba_tables where owner='PERFSTAT';
+
+TABLE_NAME
+--------------------------------------------------------------------------------
+STATS$DATABASE_INSTANCE
+STATS$LEVEL_DESCRIPTION
+STATS$SNAPSHOT
+STATS$DB_CACHE_ADVICE
+STATS$FILESTATXS
+STATS$TEMPSTATXS
+STATS$LATCH
+STATS$LATCH_CHILDREN
+STATS$LATCH_PARENT
+STATS$LATCH_MISSES_SUMMARY
+STATS$LIBRARYCACHE
+
+TABLE_NAME
+--------------------------------------------------------------------------------
+STATS$BUFFER_POOL_STATISTICS
+STATS$ROLLSTAT
+STATS$ROWCACHE_SUMMARY
+STATS$SGA
+STATS$SGASTAT
+STATS$SYSSTAT
+STATS$SESSTAT
+STATS$SYSTEM_EVENT
+STATS$SESSION_EVENT
+STATS$WAITSTAT
+STATS$ENQUEUE_STATISTICS
+
+TABLE_NAME
+--------------------------------------------------------------------------------
+STATS$SQL_SUMMARY
+STATS$SQLTEXT
+STATS$SQL_STATISTICS
+STATS$RESOURCE_LIMIT
+STATS$DLM_MISC
+STATS$CR_BLOCK_SERVER
+STATS$CURRENT_BLOCK_SERVER
+STATS$INSTANCE_CACHE_TRANSFER
+STATS$UNDOSTAT
+STATS$SQL_PLAN_USAGE
+STATS$SQL_PLAN
+
+TABLE_NAME
+--------------------------------------------------------------------------------
+STATS$SEG_STAT
+STATS$SEG_STAT_OBJ
+STATS$PGASTAT
+STATS$PARAMETER
+STATS$INSTANCE_RECOVERY
+STATS$STATSPACK_PARAMETER
+STATS$SHARED_POOL_ADVICE
+STATS$SQL_WORKAREA_HISTOGRAM
+STATS$PGA_TARGET_ADVICE
+STATS$JAVA_POOL_ADVICE
+STATS$THREAD
+
+TABLE_NAME
+--------------------------------------------------------------------------------
+STATS$FILE_HISTOGRAM
+STATS$EVENT_HISTOGRAM
+STATS$TIME_MODEL_STATNAME
+STATS$SYS_TIME_MODEL
+STATS$SESS_TIME_MODEL
+STATS$STREAMS_CAPTURE
+STATS$STREAMS_APPLY_SUM
+STATS$PROPAGATION_SENDER
+STATS$PROPAGATION_RECEIVER
+STATS$BUFFERED_QUEUES
+STATS$BUFFERED_SUBSCRIBERS
+
+TABLE_NAME
+--------------------------------------------------------------------------------
+STATS$RULE_SET
+STATS$OSSTATNAME
+STATS$OSSTAT
+STATS$PROCESS_ROLLUP
+STATS$PROCESS_MEMORY_ROLLUP
+STATS$SGA_TARGET_ADVICE
+STATS$STREAMS_POOL_ADVICE
+STATS$MUTEX_SLEEP
+STATS$DYNAMIC_REMASTER_STATS
+STATS$IOSTAT_FUNCTION_NAME
+STATS$IOSTAT_FUNCTION
+
+TABLE_NAME
+--------------------------------------------------------------------------------
+STATS$IOSTAT_FUNCTION_DETAIL
+STATS$MEMORY_TARGET_ADVICE
+STATS$MEMORY_DYNAMIC_COMPS
+STATS$MEMORY_RESIZE_OPS
+STATS$INTERCONNECT_PINGS
+STATS$IDLE_EVENT
+STATS$TEMP_SQLSTATS
+
+73 lignes selectionnees.
+
+
+
+desc stats$sql_plan_usage
+
+desc stats$sql_plan_usage
+ Nom                                       NULL ?   Type
+ ----------------------------------------- -------- ----------------------------
+ SNAP_ID                                   NOT NULL NUMBER
+ DBID                                      NOT NULL NUMBER
+ INSTANCE_NUMBER                           NOT NULL NUMBER
+ OLD_HASH_VALUE                            NOT NULL NUMBER
+ TEXT_SUBSET                               NOT NULL VARCHAR2(31)
+ PLAN_HASH_VALUE                           NOT NULL NUMBER
+ HASH_VALUE                                         NUMBER
+ SQL_ID                                             VARCHAR2(13)
+ COST                                      NOT NULL NUMBER
+ ADDRESS                                            RAW(8)
+ OPTIMIZER                                          VARCHAR2(20)
+ LAST_ACTIVE_TIME                                   DATE
+
+
+
+
+desc stats$sql_plan
+ Nom                                       NULL ?   Type
+ ----------------------------------------- -------- ----------------------------
+ PLAN_HASH_VALUE                           NOT NULL NUMBER
+ ID                                        NOT NULL NUMBER
+ OPERATION                                          VARCHAR2(30)
+ OPTIONS                                            VARCHAR2(30)
+ OBJECT_NODE                                        VARCHAR2(40)
+ OBJECT#                                            NUMBER
+ OBJECT_OWNER                                       VARCHAR2(128)
+ OBJECT_NAME                                        VARCHAR2(128)
+ OBJECT_ALIAS                                       VARCHAR2(261)
+ OBJECT_TYPE                                        VARCHAR2(20)
+ OPTIMIZER                                          VARCHAR2(20)
+ PARENT_ID                                          NUMBER
+ DEPTH                                              NUMBER
+ POSITION                                           NUMBER
+ SEARCH_COLUMNS                                     NUMBER
+ COST                                               NUMBER
+ CARDINALITY                                        NUMBER
+ BYTES                                              NUMBER
+ OTHER_TAG                                          VARCHAR2(35)
+ PARTITION_START                                    VARCHAR2(64)
+ PARTITION_STOP                                     VARCHAR2(64)
+ PARTITION_ID                                       NUMBER
+ OTHER                                              VARCHAR2(4000)
+ DISTRIBUTION                                       VARCHAR2(20)
+ CPU_COST                                           NUMBER
+ IO_COST                                            NUMBER
+ TEMP_SPACE                                         NUMBER
+ ACCESS_PREDICATES                                  VARCHAR2(4000)
+ FILTER_PREDICATES                                  VARCHAR2(4000)
+ PROJECTION                                         VARCHAR2(4000)
+ TIME                                               NUMBER
+ QBLOCK_NAME                                        VARCHAR2(128)
+ REMARKS                                            VARCHAR2(4000)
+ SNAP_ID                                            NUMBER
+
+desc STATS$SQLTEXT
+ Nom                                       NULL ?   Type
+ ----------------------------------------- -------- ----------------------------
+ OLD_HASH_VALUE                            NOT NULL NUMBER
+ TEXT_SUBSET                               NOT NULL VARCHAR2(31)
+ PIECE                                     NOT NULL NUMBER
+ SQL_ID                                             VARCHAR2(13)
+ SQL_TEXT                                           VARCHAR2(64)
+ ADDRESS                                            RAW(8)
+ COMMAND_TYPE                                       NUMBER
+ LAST_SNAP_ID                                       NUMBER
+
+
+desc STATS$SQL_SUMMARY
+ Nom                                       NULL ?   Type
+ ----------------------------------------- -------- ----------------------------
+ SNAP_ID                                   NOT NULL NUMBER
+ DBID                                      NOT NULL NUMBER
+ INSTANCE_NUMBER                           NOT NULL NUMBER
+ TEXT_SUBSET                               NOT NULL VARCHAR2(31)
+ OLD_HASH_VALUE                            NOT NULL NUMBER
+ SQL_TEXT                                           VARCHAR2(1000)
+ SQL_ID                                             VARCHAR2(13)
+ SHARABLE_MEM                                       NUMBER
+ SORTS                                              NUMBER
+ MODULE                                             VARCHAR2(64)
+ LOADED_VERSIONS                                    NUMBER
+ FETCHES                                            NUMBER
+ EXECUTIONS                                         NUMBER
+ PX_SERVERS_EXECUTIONS                              NUMBER
+ END_OF_FETCH_COUNT                                 NUMBER
+ LOADS                                              NUMBER
+ INVALIDATIONS                                      NUMBER
+ PARSE_CALLS                                        NUMBER
+ DISK_READS                                         NUMBER
+ DIRECT_WRITES                                      NUMBER
+ BUFFER_GETS                                        NUMBER
+ APPLICATION_WAIT_TIME                              NUMBER
+ CONCURRENCY_WAIT_TIME                              NUMBER
+ CLUSTER_WAIT_TIME                                  NUMBER
+ USER_IO_WAIT_TIME                                  NUMBER
+ PLSQL_EXEC_TIME                                    NUMBER
+ JAVA_EXEC_TIME                                     NUMBER
+ ROWS_PROCESSED                                     NUMBER
+ COMMAND_TYPE                                       NUMBER
+ ADDRESS                                            RAW(8)
+ HASH_VALUE                                         NUMBER
+ VERSION_COUNT                                      NUMBER
+ CPU_TIME                                           NUMBER
+ ELAPSED_TIME                                       NUMBER
+ AVG_HARD_PARSE_TIME                                NUMBER
+ OUTLINE_SID                                        NUMBER
+ OUTLINE_CATEGORY                                   VARCHAR2(64)
+ CHILD_LATCH                                        NUMBER
+ SQL_PROFILE                                        VARCHAR2(64)
+ PROGRAM_ID                                         NUMBER
+ PROGRAM_LINE#                                      NUMBER
+ EXACT_MATCHING_SIGNATURE                           NUMBER
+ FORCE_MATCHING_SIGNATURE                           NUMBER
+ LAST_ACTIVE_TIME                                   DATE
+
+
+
+
+
+alter session set nls_date_format='DD/MM/YYYY HH24:MI:SS';
+
+CA MARCHE : MAIS 3 fois les lignes 
+SELECT    summary.SQL_ID,
+    summary.EXECUTIONS,
+    summary.BUFFER_GETS,
+    summary.DISK_READS,
+	sqltext.piece,
+    sqltext.SQL_TEXT,
+   	sqpu.LAST_ACTIVE_TIME,
+	sqpu.PLAN_HASH_VALUE,
+	sqpu.old_hash_value
+FROM STATS$SQL_SUMMARY summary ,  STATS$SQLTEXT sqltext , STATS$SQL_PLAN sqlplan, stats$sql_plan_usage sqpu
+where sqlplan.PLAN_HASH_VALUE='3284627250'
+and summary.SQL_ID=sqltext.SQL_ID
+and sqpu.PLAN_HASH_VALUE=sqlplan.PLAN_HASH_VALUE
+and sqpu.SQL_ID=sqltext.SQL_ID
+and sqpu.SQL_ID=summary.SQL_ID
+and sqpu.old_hash_value=sqltext.old_hash_value
+and sqpu.old_hash_value=summary.old_hash_value
+and sqpu.snap_id=summary.snap_id
+and summary.snap_id=sqlplan.snap_id
+and sqlplan.snap_id=sqltext.last_snap_id
+and sqltext.last_snap_id=sqpu.snap_id
+order by sqpu.LAST_ACTIVE_TIME,summary.SQL_ID,sqpu.PLAN_HASH_VALUE,sqltext.piece;
+
+
+
+
+
+SELECT sqpu.snap_id, summary.SQL_ID,
+    summary.EXECUTIONS,
+    summary.BUFFER_GETS,
+    summary.DISK_READS,
+    sqltext.SQL_TEXT,
+   	sqpu.LAST_ACTIVE_TIME,
+	sqpu.PLAN_HASH_VALUE,
+	sqpu.old_hash_value
+FROM STATS$SQL_SUMMARY summary ,  STATS$SQLTEXT sqltext , STATS$SQL_PLAN sqlplan, stats$sql_plan_usage sqpu
+where sqlplan.PLAN_HASH_VALUE='3284627250'
+and sqpu.PLAN_HASH_VALUE=sqlplan.PLAN_HASH_VALUE
+and summary.SQL_ID=sqltext.SQL_ID
+and sqpu.SQL_ID=sqltext.SQL_ID
+and sqpu.old_hash_value=sqltext.old_hash_value
+and sqltext.old_hash_value=summary.old_hash_value
+and sqpu.snap_id=summary.snap_id
+and summary.snap_id=sqlplan.snap_id
+order by snap_id,summary.SQL_ID,sqpu.PLAN_HASH_VALUE,piece;
+
+
+col exact_matching_signature format 999999999999999999999999 
+col force_matching_signature format 999999999999999999999999 
+
+select distinct sqpu.INSTANCE_NUMBER,sqltext.SQL_TEXT,  sqpu.sql_id, sqpu.plan_hash_value, summary.EXACT_MATCHING_SIGNATURE , 
+summary.FORCE_MATCHING_SIGNATURE 
+from stats$sql_plan_usage sqpu,  STATS$SQLTEXT sqltext, STATS$SQL_SUMMARY summary
+where sqpu.SQL_ID=sqltext.SQL_ID
+and summary.SQL_ID=sqpu.SQL_ID
+and upper(sqltext.SQL_TEXT) like upper('%'||'&mysqltext'||'%')
+and sqltext.SQL_TEXT not like '%like%';
+
+
+
+
+
+summary.SQL_ID = sqltext.SQL_ID
+	
+	
+	ON summary.SQL_ID = sqltext.SQL_ID
+JOIN
+    STATS$SQL_PLAN sqlplan ON summary.SQL_ID = sqlplan.SQL_ID
+	
+join stats$sql_plan_usage sqpu ON 
+
+where sqlplan.PLAN_HASH_VALUE='3284627250'
+
+

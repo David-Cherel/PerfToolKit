@@ -1,0 +1,122 @@
+
+desc stats$sql_plan_usage
+ Nom                                       NULL ?   Type
+ ----------------------------------------- -------- ----------------------------
+ SNAP_ID                                   NOT NULL NUMBER
+ DBID                                      NOT NULL NUMBER
+ INSTANCE_NUMBER                           NOT NULL NUMBER
+ OLD_HASH_VALUE                            NOT NULL NUMBER
+ TEXT_SUBSET                               NOT NULL VARCHAR2(31)
+ PLAN_HASH_VALUE                           NOT NULL NUMBER
+ HASH_VALUE                                         NUMBER
+ SQL_ID                                             VARCHAR2(13)
+ COST                                      NOT NULL NUMBER
+ ADDRESS                                            RAW(8)
+ OPTIMIZER                                          VARCHAR2(20)
+ LAST_ACTIVE_TIME                                   DATE
+
+
+
+
+desc stats$sql_plan
+ Nom                                       NULL ?   Type
+ ----------------------------------------- -------- ----------------------------
+ PLAN_HASH_VALUE                           NOT NULL NUMBER
+ ID                                        NOT NULL NUMBER
+ OPERATION                                          VARCHAR2(30)
+ OPTIONS                                            VARCHAR2(30)
+ OBJECT_NODE                                        VARCHAR2(40)
+ OBJECT#                                            NUMBER
+ OBJECT_OWNER                                       VARCHAR2(128)
+ OBJECT_NAME                                        VARCHAR2(128)
+ OBJECT_ALIAS                                       VARCHAR2(261)
+ OBJECT_TYPE                                        VARCHAR2(20)
+ OPTIMIZER                                          VARCHAR2(20)
+ PARENT_ID                                          NUMBER
+ DEPTH                                              NUMBER
+ POSITION                                           NUMBER
+ SEARCH_COLUMNS                                     NUMBER
+ COST                                               NUMBER
+ CARDINALITY                                        NUMBER
+ BYTES                                              NUMBER
+ OTHER_TAG                                          VARCHAR2(35)
+ PARTITION_START                                    VARCHAR2(64)
+ PARTITION_STOP                                     VARCHAR2(64)
+ PARTITION_ID                                       NUMBER
+ OTHER                                              VARCHAR2(4000)
+ DISTRIBUTION                                       VARCHAR2(20)
+ CPU_COST                                           NUMBER
+ IO_COST                                            NUMBER
+ TEMP_SPACE                                         NUMBER
+ ACCESS_PREDICATES                                  VARCHAR2(4000)
+ FILTER_PREDICATES                                  VARCHAR2(4000)
+ PROJECTION                                         VARCHAR2(4000)
+ TIME                                               NUMBER
+ QBLOCK_NAME                                        VARCHAR2(128)
+ REMARKS                                            VARCHAR2(4000)
+ SNAP_ID                                            NUMBER
+
+desc STATS$SQLTEXT
+ Nom                                       NULL ?   Type
+ ----------------------------------------- -------- ----------------------------
+ OLD_HASH_VALUE                            NOT NULL NUMBER
+ TEXT_SUBSET                               NOT NULL VARCHAR2(31)
+ PIECE                                     NOT NULL NUMBER
+ SQL_ID                                             VARCHAR2(13)
+ SQL_TEXT                                           VARCHAR2(64)
+ ADDRESS                                            RAW(8)
+ COMMAND_TYPE                                       NUMBER
+ LAST_SNAP_ID                                       NUMBER
+
+
+desc STATS$SQL_SUMMARY
+ Nom                                       NULL ?   Type
+ ----------------------------------------- -------- ----------------------------
+ SNAP_ID                                   NOT NULL NUMBER
+ DBID                                      NOT NULL NUMBER
+ INSTANCE_NUMBER                           NOT NULL NUMBER
+ TEXT_SUBSET                               NOT NULL VARCHAR2(31)
+ OLD_HASH_VALUE                            NOT NULL NUMBER
+ SQL_TEXT                                           VARCHAR2(1000)
+ SQL_ID                                             VARCHAR2(13)
+ SHARABLE_MEM                                       NUMBER
+ SORTS                                              NUMBER
+ MODULE                                             VARCHAR2(64)
+ LOADED_VERSIONS                                    NUMBER
+ FETCHES                                            NUMBER
+ EXECUTIONS                                         NUMBER
+ PX_SERVERS_EXECUTIONS                              NUMBER
+ END_OF_FETCH_COUNT                                 NUMBER
+ LOADS                                              NUMBER
+ INVALIDATIONS                                      NUMBER
+ PARSE_CALLS                                        NUMBER
+ DISK_READS                                         NUMBER
+ DIRECT_WRITES                                      NUMBER
+ BUFFER_GETS                                        NUMBER
+ APPLICATION_WAIT_TIME                              NUMBER
+ CONCURRENCY_WAIT_TIME                              NUMBER
+ CLUSTER_WAIT_TIME                                  NUMBER
+ USER_IO_WAIT_TIME                                  NUMBER
+ PLSQL_EXEC_TIME                                    NUMBER
+ JAVA_EXEC_TIME                                     NUMBER
+ ROWS_PROCESSED                                     NUMBER
+ COMMAND_TYPE                                       NUMBER
+ ADDRESS                                            RAW(8)
+ HASH_VALUE                                         NUMBER
+ VERSION_COUNT                                      NUMBER
+ CPU_TIME                                           NUMBER
+ ELAPSED_TIME                                       NUMBER
+ AVG_HARD_PARSE_TIME                                NUMBER
+ OUTLINE_SID                                        NUMBER
+ OUTLINE_CATEGORY                                   VARCHAR2(64)
+ CHILD_LATCH                                        NUMBER
+ SQL_PROFILE                                        VARCHAR2(64)
+ PROGRAM_ID                                         NUMBER
+ PROGRAM_LINE#                                      NUMBER
+ EXACT_MATCHING_SIGNATURE                           NUMBER
+ FORCE_MATCHING_SIGNATURE                           NUMBER
+ LAST_ACTIVE_TIME                                   DATE
+
+
+
+

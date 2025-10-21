@@ -1,0 +1,2070 @@
+#!/u01/app/oracle/product/19.0.0/dbhome_4/perl/bin/perl
+
+######################################################
+## Performance tool kit 
+## author : David Cherel (david.cherel@oracle.com)
+## Mainly based on SQL scripts written by Kerry Osborne (http://kerryosborne.oracle-guy.com/)
+## some subs coming from Bertrand Drouvot (https://bdrouvot.wordpress.com/)
+## plus new stuff from me 
+## Date	  : 15/010/2025
+######################################################
+
+our $perl_script_version='1.8';
+
+#$mdp = prompt_for_password();
+#$connect_string = "sys/$mdp as sysdba";
+$connect_string = " / as sysdba";
+
+
+
+BEGIN {
+    die "ORACLE_HOME not set\n" unless $ENV{ORACLE_HOME};
+	die "ORACLE_SID not set\n" unless $ENV{ORACLE_SID};
+    unless ($ENV{OrAcLePeRl}) {
+       $ENV{OrAcLePeRl} = "$ENV{ORACLE_HOME}/perl";
+       $ENV{PERL5LIB} = "$ENV{PERL5LIB}:$ENV{OrAcLePeRl}/lib:$ENV{OrAcLePeRl}/lib/site_perl";
+       $ENV{LD_LIBRARY_PATH} = "$ENV{LD_LIBRARY_PATH}:$ENV{ORACLE_HOME}/lib32:$ENV{ORACLE_HOME}/lib";
+       exec "$ENV{OrAcLePeRl}/bin/perl", $0, @ARGV;
+    }
+}
+
+
+
+
+
+
+use feature qw( say );
+use feature qw( switch );
+no warnings qw( experimental::smartmatch );
+
+use DBI;
+use DBD::Oracle qw(:ora_session_modes);
+
+use Getopt::Long; 
+
+
+our $debug=0;
+our $version;
+our $nb_pdbs=0;
+our $interval=1; 
+our $count=999999;
+our $showinst=0;
+our $rac=0;
+our $inst_type='RDBMS';
+our $dbh;
+our $sql1;
+
+
+#Import of variables from PerfToolKit_parameters.conf
+do './PerfToolKit_parameters.conf' or die "Cannot open file PerfToolKit_parameters.pl : $!\n";
+
+
+
+# say "PTK_EDITION : $PTK_EDITION";
+# say "PTK_MULTITENANT_DB : $PTK_MULTITENANT_DB";
+# say "ORACLE_PDB_SID : $ORACLE_PDB_SID";
+# say "PTK_STATSPACK : $PTK_STATSPACK";
+
+
+# #https://metacpan.org/pod/release/TPABA/Term-Screen-Uni-0.04/lib/Term/Screen/Uni.pm
+# require Term::Screen::Uni;
+# my $scr = new Term::Screen::Uni;
+
+#$ORACLE_HOME='D:\oracle\product\19.3\dbhome19.3';
+#$ORACLE_HOME=$ENV{ORACLE_HOME};
+
+#$connect_string='sys/ClarisV3! as sysdba';
+
+#open LOGFILEH, 'perf_tool_kit.log' or die $!;
+
+# open my $logfile_name, ">>", "perf_tool_kit.log";
+#open LOGDIRH, 'log' or die $!;
+#open TEMPDIRH, 'temp' or die $!;
+#open CURRENTDIRH, '.' or die $!;
+$logfile_name='perf_tool_kit.log';
+$LOG_DIR="./log";
+
+sub debug {
+    if ($debug==1) {
+        print $_[0]."\n";
+    }
+}
+
+sub prompt_for_password {
+    require Term::ReadKey;
+
+    # Tell the terminal not to show the typed chars
+    Term::ReadKey::ReadMode('noecho');
+
+    print "Entrer le mot de passe du user SYS sous oracle :\n";
+    my $password = Term::ReadKey::ReadLine(0);
+
+    # Rest the terminal to what it was previously doing
+    Term::ReadKey::ReadMode('restore');
+
+    # The one you typed didn't echo!
+    print "\n";
+
+    # get rid of that pesky line ending (and works on Windows)
+    $password =~ s/\R\z//;
+
+    # say "Password was <$password>"; # check what you are doing :)
+
+    return $password;
+}
+
+sub say_time {
+	$datestring = localtime();
+    say "INFO : $datestring";
+}
+
+
+sub write_to_log_and_screen {
+    my ($a) = @_;
+    # save original settings. You could also use lexical typeglobs.
+    *OLD_STDOUT = *STDOUT;
+    *OLD_STDERR = *STDERR;
+	say "$a";
+    # reassign STDOUT, STDERR
+    open my $log_fh, '>>', $logfile_name;
+    *STDOUT = $log_fh;
+    *STDERR = $log_fh;
+
+    say "$a";
+
+    # done, restore STDOUT/STDERR
+    *STDOUT = *OLD_STDOUT;
+    *STDERR = *OLD_STDERR;
+}
+sub clean 
+{
+my ($file_name) = @_;
+
+	if(-e $file_name) 
+	{
+		unlink($file_name);
+	}
+	elsif (-e "$LOG_DIR/$file_name")
+	{
+	unlink("$LOG_DIR/$file_name");
+	}
+
+}
+sub push_spool_in_mem {
+
+}
+
+sub exec_sql {
+	my ($connect,$sql_file) = @_;
+	say "INFO :execution du sqlplus $sql_file";
+	#say "sqlplus -S $connect \@$sql_file";
+	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file `;
+	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
+	#my $result = qx{ type $sql_file };
+	return $result;
+}
+
+sub exec_sql_one_param {
+	my ($connect,$sql_file,$p1) = @_;
+	say "INFO :execution du sqlplus $sql_file";
+	#say "sqlplus -S $connect \@$sql_file";
+	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 `;
+	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
+	#my $result = qx{ type $sql_file };
+	return $result;
+}
+
+sub exec_sql_two_param {
+	my ($connect,$sql_file,$p1,$p2) = @_;
+	say "INFO :execution du sqlplus $sql_file";
+	#say "sqlplus -S $connect \@$sql_file";
+	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 $p2 `;
+	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
+	#my $result = qx{ type $sql_file };
+	return $result;
+}
+
+sub exec_sql_three_param {
+	my ($connect,$sql_file,$p1,$p2,$p3) = @_;
+	say "INFO :execution du sqlplus $sql_file";
+	#say "sqlplus -S $connect \@$sql_file";
+	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 $p2 $p3`;
+	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
+	#my $result = qx{ type $sql_file };
+	return $result;
+}
+
+sub exec_sql_four_param {
+	my ($connect,$sql_file,$p1,$p2,$p3,$p4) = @_;
+	say "INFO :execution du sqlplus $sql_file";
+	#say "sqlplus -S $connect \@$sql_file";
+	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 $p2 $p3 $p4`;
+	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
+	#my $result = qx{ type $sql_file };
+	return $result;
+}
+
+sub exec_sql_five_param {
+	my ($connect,$sql_file,$p1,$p2,$p3,$p4,$p5) = @_;
+	say "INFO :execution du sqlplus $sql_file";
+	#say "sqlplus -S $connect \@$sql_file";
+	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 $p2 $p3 $p4 $p5`;
+	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
+	#my $result = qx{ type $sql_file };
+	return $result;
+}
+
+sub print_menu {
+	say "MENU : Action list";
+}
+
+sub prompt_action {
+	my $command;
+	print("Enter a command to execute, Q to quit.\n"); 
+	chomp($command = <STDIN>); 
+	return  $command;
+}
+
+sub execute_sql {
+	
+my $choice;
+my $result_query;
+my $SQL_TEXT;
+my $sql_id;
+
+
+say '------------------------------------------------------------';
+say '- Option :  ESQ | for Executing sql statement or a SQL file ';
+say '------------------------------------------------------------';
+do{
+	say ('Enter 1 for executing a simple query '); 
+	say ('Enter 2 for executing a SQL file ');
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+if ($choice eq 1)
+{
+
+	my $result;
+
+	clean("sql_exec_query.sql");
+	clean("sql_exec_query.log");
+
+
+
+	say 'Which statement/query do you want to execute ?';
+	chomp($SQL_TEXT = <STDIN>); 
+
+	open my $sql_exec_query, ">>", "sql_exec_query.sql";
+
+	$sql_exec_query->say ('set lines 180');
+	$sql_exec_query->say ('set pages 999');
+	$sql_exec_query->say ('spool sql_exec_query.log');
+	$sql_exec_query->say ('alter session set statistics_level=all;');
+	#$sql_exec_query->say ('alter session set "_rowsource_execution_statistics"=true; ');
+	$sql_exec_query->say ("$SQL_TEXT");
+	$sql_exec_query->say ("SELECT * FROM table(dbms_xplan.display_cursor (format=>'ALLSTATS LAST ALL +OUTLINE'));");
+	$sql_exec_query->say ('spool off');
+	$sql_exec_query->say ('exit');
+	close $sql_exec_query;
+
+	$result=exec_sql ($connect_string,"sql_exec_query.sql");
+	say ("$result");
+	say ('###########################################################');
+	say ('spool of execution is here :  sql_exec_query.log ');
+	say ('###########################################################');
+	# Plan hash value: 491101008
+	# SQL_ID  56bs32ukywdsq, child number 0
+	push_spool_in_mem('sql_exec_query.log');
+
+}
+
+
+elsif ($choice eq 2)
+{
+	my $result;
+	my $SQL_FILE_NAME;
+
+	clean("sql_exec_sqlfile.sql");
+	clean("sql_exec_sqlfile.log");
+
+	say 'Which SQL file do you want to execute ?';
+	chomp($SQL_FILE_NAME = <STDIN>); 
+	open my $source_fh, '<', $SQL_FILE_NAME or die "Cannot open SQL File: $!";
+	
+	open my $sql_exec_sqlfile, ">>", "sql_exec_sqlfile.sql";
+	$sql_exec_sqlfile->say ('set lines 180');
+	$sql_exec_sqlfile->say ('set pages 999');
+	$sql_exec_sqlfile->say ('spool sql_exec_sqlfile.log');
+	$sql_exec_sqlfile->say ('alter session set statistics_level=all;');
+	# Appending each line from source_fh to file $sql_exec_sqlfile
+	while (my $line = <$source_fh>) {
+    print $sql_exec_sqlfile $line;  
+    }
+	$sql_exec_sqlfile->say ("SELECT * FROM table(dbms_xplan.display_cursor (format=>'ALLSTATS LAST ALL +OUTLINE'));");
+	$sql_exec_sqlfile->say ('spool off');
+	$sql_exec_sqlfile->say ('exit');
+	
+	close $sql_exec_sqlfile;
+	close $source_fh;
+	$result=exec_sql ($connect_string,"sql_exec_sqlfile.sql");
+	say ("$result");
+	say ('###########################################################');
+	say ('spool of execution is here :  sql_exec_sqlfile.log ');
+	say ('###########################################################');
+}
+
+
+} while ($choice ne 'q');
+
+
+
+}
+
+
+
+
+sub snapshot {
+	
+my $choice;
+my $result_query;
+my $SQL_TEXT;
+my $sql_id;
+
+say '------------------------------------------------------------';
+say '- Option :  FLU | for Flushing sql statement in History ';
+say '------------------------------------------------------------';
+do{
+	say ('Enter 1 for creating an AWR Snapshot (LICENSE = DIAG PACK) '); 
+	say ('Enter 2 for creating a Statspack Snapshot');
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+if ($choice eq 1)
+{	
+my $result_query;
+$result_query=exec_sql($connect_string,'create_awr_snapshot.sql');
+print $result_query;
+}
+
+
+elsif ($choice eq 2)
+{
+my $result_query;
+$result_query=exec_sql($connect_string,'create_statspack_snapshot.sql');
+print $result_query;	
+}
+
+}
+}
+
+
+
+
+
+sub find_sql {
+say '-------------------------------------------------------------------------------------------';
+say '- Option : Finding SQL query in Library Cache (Shared Pool)/ Display Performance Indicators';
+say '-------------------------------------------------------------------------------------------';
+
+	clean("sql_find_query.sql");
+	
+	my $SQL_TEXT;
+	my $result_query;
+	print("Dynamic SQL script based on : find_sql_template.sql\n"); 
+	print("Enter an extract of SQL_TEXT to find a cursor in Library Cache:\n"); 
+	chomp($SQL_TEXT = <STDIN>); 
+	$SQL_TEXT =~ s/'/''/g;
+
+# unless(open $sql_find_query, '>'.sql_find_query.sql) {
+    # # Die with error message 
+    # # if we can't open it.
+    # die "\nUnable to create sql_find_query.sql\n";
+# }
+
+open (my $sql_find_query, '>', 'sql_find_query.sql') or die "Could not open file 'sql_find_query.sql' $!";
+$sql_find_query->say ('set lines 180');
+$sql_find_query->say ('set pages 999');
+$sql_find_query->say ('col obsolete format a9');
+$sql_find_query->say ('col avg_etime for 999,999.99999');
+$sql_find_query->say ('col avg_lio for 999,999,999.9');
+$sql_find_query->say ('col avg_pio for 999,999,999.9');
+$sql_find_query->say ('col avg_cpu_time for 999,999.99999');
+$sql_find_query->say ('spool sql_find_query.log');
+$sql_find_query->say("select /* PTK */ inst_id, sql_id, child_number, IS_OBSOLETE obsolete, plan_hash_value plan_hash, executions execs,");
+$sql_find_query->say("(elapsed_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_etime,");
+$sql_find_query->say("disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio,");
+$sql_find_query->say("buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,");
+$sql_find_query->say("(cpu_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_cpu_time,");
+$sql_find_query->say("sql_text from gv\$sql s");
+$sql_find_query->say("where upper(sql_text) like upper('%'||'$SQL_TEXT'||'%')");
+$sql_find_query->say("and sql_text not like '%/* PTK */%'");
+$sql_find_query->say("and sql_text not like '%and dbms_lob.substr(txt.sql_text,3999,1) not%'");
+$sql_find_query->say("order by 1, 2, 3, 4;");
+$sql_find_query->say("spool off");
+$sql_find_query->say("exit");
+
+close $sql_find_query;
+
+$result_query=exec_sql($connect_string,'sql_find_query.sql');
+
+print $result_query;
+}
+
+sub find_sql_awr {
+my $choice;
+my $result_query;
+my $SQL_TEXT;
+my $sql_id;
+
+say '----------------------------------------------------------------------';
+say '- Option :  Finding SQL query in AWR Repository (LICENSE = DIAG PACK)';
+say '----------------------------------------------------------------------';
+do{
+	say ('Enter 1 for finding a SQL_ID from extract of SQL_TEXT : find_sql_awr.sql'); 
+	say ('Enter 2 for finding various execution plans (PLAN_HASH_VALUE) for a SQL_ID Display Performance Indicators : awr_plan_change.sql ');
+	say ('Enter q for going back to previous menu  ');
+	chomp($choice = <STDIN>); 
+
+if ($choice eq 1)
+{
+	print("Dynamic SQL script based on : find_sql_awr_template.sql\n"); 
+	clean("sql_find_awr_query.sql");
+	clean("sql_find_awr_query.log");
+	print("Enter an extract of SQL_TEXT to find a SQL in AWR reports:\n"); 
+	chomp($SQL_TEXT = <STDIN>); 
+
+	
+	$SQL_TEXT =~ s/'/''/g;
+
+open (my $sql_find_query, '>', 'sql_find_awr_query.sql') or die "Could not open file 'sql_find_awr_query.sql' $!";
+
+$sql_find_query->say ("set long 32000");
+$sql_find_query->say ("set lines 180");
+$sql_find_query->say ("set pages 999");
+$sql_find_query->say ("col sql_text format a60 ");
+$sql_find_query->say ("col node for 99999");
+$sql_find_query->say ("/* PTK */ select distinct s.instance_number node, dbms_lob.substr(txt.sql_text,3999,1) sql_text,  s.sql_id, s.plan_hash_value");
+$sql_find_query->say ("from DBA_HIST_SQLSTAT S,  dba_hist_sqltext txt");
+$sql_find_query->say ("where s.sql_id=txt.sql_id");
+$sql_find_query->say ("and upper(dbms_lob.substr(txt.sql_text,3999,1)) like upper(('%'||'$SQL_TEXT'||'%'))");
+$sql_find_query->say ("and dbms_lob.substr(txt.sql_text,3999,1) not like '%/* PTK */%';");
+$sql_find_query->say ("exit;");
+
+
+close $sql_find_query;
+
+
+
+$result_query=exec_sql($connect_string,'sql_find_awr_query.sql');
+print $result_query;
+
+
+}
+elsif ($choice eq 2)
+{
+
+
+
+	clean("awr_plan_change.log");
+	print("Enter a SQL_ID:\n"); 
+	chomp($sql_id = <STDIN>);
+
+$result_query=exec_sql_one_param($connect_string,'awr_plan_change.sql',$sql_id);
+print $result_query;
+}
+
+} while ($choice ne 'q');
+
+}
+
+
+
+
+
+
+sub find_sql_statspack {
+my $result_query;
+my $SQL_TEXT;
+
+	print("Enter an extract of SQL_TEXT to find a SQL in Statspack snapshots:\n"); 
+$result_query=exec_sql($connect_string,'find_sql_statspack_template.sql');
+print $result_query;
+}
+
+
+
+
+
+
+
+sub find_matching_signature {
+my $result_query;
+my $sql_id;
+
+	print("Enter a SQL_ID:\n"); 
+	chomp($sql_id = <STDIN>);
+$result_query=exec_sql_one_param($connect_string,'find_matching_signature.sql',$sql_id);
+print $result_query;
+}
+
+
+sub find_matching_signature_statspack {
+my $result_query;
+my $sql_id;
+
+	print("Enter a SQL_ID:\n"); 
+	chomp($sql_id = <STDIN>);
+$result_query=exec_sql_one_param($connect_string,'find_matching_signature_statspack.sql',$sql_id);
+print $result_query;
+}
+
+
+
+
+
+sub display_plan {
+my $result_query;
+my $sql_id;
+
+	print("Enter a SQL_ID:\n"); 
+	chomp($sql_id = <STDIN>);
+$result_query=exec_sql_one_param($connect_string,'get_plan.sql',$sql_id);
+print $result_query;
+}
+
+
+sub display_plan_awr {
+my $result_query;
+my $sql_id;
+my $plan_hash_value;
+	print("Enter a SQL_ID:\n"); 
+	chomp($sql_id = <STDIN>);
+	print("Enter a PLAN_HASH_VALUE (it accepts NULL value - type double ENTER then) :\n"); 
+	chomp($plan_hash_value = <STDIN>);
+$result_query=exec_sql_two_param($connect_string,'get_plan_awr.sql',$sql_id,$plan_hash_value);
+print $result_query;
+}
+
+sub display_plan_statspack {
+my $result_query;
+my $plan_hash_value;
+	print("Enter a PLAN_HASH_VALUE :\n"); 
+	chomp($plan_hash_value = <STDIN>);
+$result_query=exec_sql_one_param($connect_string,'get_plan_statspack.sql',$plan_hash_value);
+print $result_query;
+}
+
+
+
+sub display_plan_baseline {
+
+my $choice;
+my $result_query;
+my $sql_plan;
+
+
+say '----------------------------------------------------------------------';
+say '- Option: DPB  for Displaying Execution Plan from SQL Baseline';
+say '- SQL File : get_plan_sql_baseline.sql';
+say '----------------------------------------------------------------------';
+
+	print("Enter a SQL Plan:\n"); 
+	chomp($sql_plan = <STDIN>);
+
+	
+$result_query=exec_sql_one_param($connect_string,'get_plan_sql_baseline.sql',$sql_plan);
+print $result_query;	
+
+}
+
+
+
+sub show_sql_baseline {
+
+
+my $choice;
+my $result_query;
+my $sql_text;
+my $sql_plan;
+my $sql_handle;
+
+say '----------------------------------------------------------------------';
+say '- Option :  SHB  for Showing SQL Baselines';
+say '----------------------------------------------------------------------';
+do{
+	say ('Enter 1 for showing last created SQL Baselines during last hour : show_last_hour_sql_baselines.sql '); 
+	say ('Enter 2 for showing last created SQL Baselines during last day : show_last_day_sql_baselines.sql ');
+	say ('Enter 3 for showing SQL Baselines with SQL Text extract inputs : show_sql_baselines_text.sql ');
+	say ('Enter 4 for showing SQL Baselines with SQL Handle inputs : show_sql_baselines_sql_handle.sql');
+	say ('Enter 5 for showing SQL Baselines with SQL Baseline Plan inputs : show_sql_baselines_sql_plan.sql');
+	say ('Enter 6 for showing ALL SQL Baselines with SQL Baseline Plan having format : SQLID_* : show_sql_baselines_with_SQLID.sql');
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+if ($choice eq 1)
+{
+$result_query=exec_sql($connect_string,'show_last_hour_sql_baselines.sql');
+print $result_query;
+}
+elsif ($choice eq 2)
+{
+$result_query=exec_sql($connect_string,'show_last_day_sql_baselines.sql');
+print $result_query;
+}
+elsif ($choice eq 3)
+{
+
+	clean("show_sql_baselines_text.sql");
+	clean("show_sql_baselines_text.log");
+	print("Enter an extract of SQL_TEXT to find a SQL Baseline:\n"); 
+	chomp($SQL_TEXT = <STDIN>); 
+	$SQL_TEXT =~ s/'/''/g;
+
+open (my $find_baseline_query, '>', 'show_sql_baselines_text.sql') or die "Could not open file 'show_sql_baselines_text.sql' $!";
+
+$find_baseline_query->say ("spool show_sql_baselines_text.log");
+$find_baseline_query->say ("set lines 180");
+$find_baseline_query->say ("set pages 999");
+$find_baseline_query->say ("col sql_text for a100 trunc");
+$find_baseline_query->say ("col last_executed for a28");
+$find_baseline_query->say ("col enabled for a7");
+$find_baseline_query->say ("col plan_hash_value for a16 trunc");
+$find_baseline_query->say ("col last_executed for a16");
+$find_baseline_query->say ("select spb.sql_handle, spb.plan_name, to_char(so.plan_id) plan_hash_value,");
+$find_baseline_query->say ("dbms_lob.substr(sql_text,3999,1) sql_text,");
+$find_baseline_query->say ("spb.enabled, spb.accepted, spb.fixed,");
+$find_baseline_query->say ("to_char(spb.last_executed,'dd-mon-yy HH24:MI') last_executed");
+$find_baseline_query->say ("from");
+$find_baseline_query->say ('dba_sql_plan_baselines spb, sqlobj$ so');
+$find_baseline_query->say ("where spb.signature = so.signature");
+$find_baseline_query->say ("and spb.plan_name = so.name");
+$find_baseline_query->say ("and spb.sql_text like ('%'||'$SQL_TEXT'||'%');");
+$find_baseline_query->say ("spool off");
+$find_baseline_query->say ("exit;");
+
+$result_query=exec_sql($connect_string,'show_sql_baselines_text.sql');
+print $result_query;
+}
+elsif ($choice eq 4)
+{
+
+
+	print("Enter a SQL Handle:\n"); 
+	chomp($sql_handle = <STDIN>);
+	$result_query=exec_sql_one_param($connect_string,'show_sql_baselines_sql_handle.sql',$sql_handle);
+	print $result_query;
+}
+elsif ($choice eq 5)
+{
+	print("Enter a SQL Baseline Plan name (could be using format SQLID_<SQL_ID>_<PLAN_HASH_VALUE>) :\n"); 
+	chomp($sql_plan = <STDIN>);
+	$result_query=exec_sql_one_param($connect_string,'show_sql_baselines_sql_plan.sql',$sql_plan);
+	print $result_query;
+}
+elsif ($choice eq 6)
+{
+	$result_query=exec_sql($connect_string,'show_sql_baselines_with_SQLID.sql');
+	print $result_query;
+}
+
+} while ($choice ne 'q');
+
+
+}
+
+
+
+
+
+
+
+
+
+sub create_sql_baseline {
+my $choice;
+my $result_query;
+my $plan_hash_value;
+my $sql_id;
+my $sql_plan;
+
+
+say '----------------------------------------------------------------------';
+say '- Option: CRB  for Creating SQL Baseline';
+say '----------------------------------------------------------------------';
+
+
+
+do	{
+	say ('Enter 1 for creating SQL Baselines from cursor cache (Library Cache) : create_sql_baseline_cursor_cache.sql'); 
+	say ('Enter 2 for creating SQL Baselines from AWR : create_sql_baseline_awr.sql'); 
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+	
+	if ($choice eq 1)
+		{
+		print("The SQL Baseline will be set to FIXED=YES\n");
+		print("Enter a SQL_ID:\n");
+		chomp($sql_id = <STDIN>);
+		print("Enter a Plan Hash Value:\n"); 
+		chomp($plan_hash_value = <STDIN>);
+		$result_query=exec_sql_four_param($connect_string,'create_sql_baseline_cursor_cache.sql',$sql_id,$plan_hash_value,'YES','YES');
+		print $result_query;
+		
+		print("*********************************************************************\n"); 
+		print("Here is the list of the last SQL Baseline created\n"); 
+		print("*********************************************************************\n"); 
+		
+		$result_query=exec_sql($connect_string,'show_last_hour_sql_baselines.sql');
+		print $result_query;	
+	
+		
+		}
+	elsif ($choice eq 2)
+		{
+		print("The SQL Baseline will be set to FIXED=YES\n");
+		print("Enter a SQL_ID:\n"); 
+		chomp($sql_id = <STDIN>);
+		print("Enter a Plan Hash Value:\n"); 
+		chomp($plan_hash_value = <STDIN>);
+		$result_query=exec_sql_four_param($connect_string,'create_sql_baseline_awr.sql',$sql_id,$plan_hash_value,'YES','YES');
+		print $result_query;
+		
+		print("*********************************************************************\n"); 
+		print("Here is the list of the last SQL Baseline created\n"); 
+		print("*********************************************************************\n"); 
+		$result_query=exec_sql($connect_string,'show_last_hour_sql_baselines.sql');
+		print $result_query;
+		}
+	
+	
+	} while ($choice ne 'q');
+
+
+}
+
+
+
+
+sub add_sql_baseline {
+
+say '------------------------------------------------------------------------------------';
+say '- Option: ADB  for Adding SQL Plan to SQL Baseline from Cursor Cache (Library Cache)';
+say '------------------------------------------------------------------------------------';
+
+my $result_query;
+my $plan_hash_value;
+my $sql_id;
+my $sql_handle;
+
+
+	print("Enter a SQL_ID:\n"); 
+	chomp($sql_id = <STDIN>);
+	print("Enter a Plan Hash Value:\n"); 
+	chomp($plan_hash_value = <STDIN>);
+	print("Enter a SQL Handle:\n"); 
+	chomp($sql_handle = <STDIN>);
+	
+$result_query=exec_sql_three_param($connect_string,'add_sql_plan_to_baseline_cursor_cache.sql',$sql_id,$plan_hash_value,$sql_handle);	
+	
+print $result_query;	
+}
+
+
+sub alter_sql_baseline {
+say '----------------------------------------------------------------------';
+say '- Option: ALB  for Altering SQL Plan from Baseline ';
+say '----------------------------------------------------------------------';
+
+my $result_query;
+my $sql_plan;
+my $sql_handle;
+my $enabled;
+my $fixed;
+
+	print("Enter a SQL Handle for Baseline:\n"); 
+	chomp($sql_handle = <STDIN>);
+	print("Enter a SQL Baseline Plan Name:\n"); 
+	chomp($sql_plan = <STDIN>);
+
+	$result_query=exec_sql_one_param($connect_string,'show_sql_baselines_sql_plan.sql',$sql_plan);
+	print $result_query;
+
+	
+	print("Enter a value for ENABLED (YES or NO):\n"); 
+	chomp($enabled = <STDIN>);
+	print("Enter a value for FIXED (YES or NO):\n"); 
+	chomp($fixed = <STDIN>);
+	
+	$result_query=exec_sql_four_param($connect_string,'alter_sql_plan_from_baseline.sql',$sql_handle,$sql_plan,$fixed,$enabled);
+	print $result_query;
+	
+	
+}
+
+
+sub swap_good_bad_plan_sql_baseline_cursor_cache {
+say '---------------------------------------------------------------------------------------------------';
+say '- Option: SWB  for Swapping bad Execution Plan with good Execution Plan while creating SQL Baseline ';
+say '               source of Execution Plan : Library Cache ';
+say '---------------------------------------------------------------------------------------------------';
+
+my $result_query;
+my $sql_id_to_fix;
+my $bad_PHV;
+my $sql_id_with_good_plan;
+my $good_PHV;
+
+
+	print("Enter the SQL_ID to fix (with bad Execution Plan) from Library Cache:\n"); 
+	chomp($sql_id_to_fix = <STDIN>);
+	print("Enter its bad Execution Plan :\n"); 
+	chomp($bad_PHV = <STDIN>);
+	print("Enter the SQL_ID having the good Execution Plan) from Library Cache:\n"); 
+	chomp($sql_id_with_good_plan = <STDIN>);
+	print("Enter its good Execution Plan:\n"); 
+	chomp($good_PHV = <STDIN>);
+
+	$result_query=exec_sql_four_param($connect_string,'swap_good_bad_plan_sql_baseline_cursor_cache.sql',$sql_id_to_fix,$bad_PHV,$sql_id_with_good_plan,$good_PHV);
+	print $result_query;
+
+print("*********************************************************************\n"); 
+print("Here is the list of the last SQL Baseline created\n"); 
+print("*********************************************************************\n"); 
+
+$result_query=exec_sql($connect_string,'show_last_hour_sql_baselines.sql');
+print $result_query;	
+	
+	
+}
+
+
+
+
+
+
+
+sub export_sql_baseline {
+
+say '----------------------------------------------------------------------';
+say '- Option: EXB  for Exporting SQL Plan from Baseline to a file ';
+say '----------------------------------------------------------------------';
+
+my $choice;
+my $result_query;
+my $sql_plan;
+my $file_name;
+my $table_name='STG_PERFTOOL';
+my $table_owner;
+my $tablespace='USERS';
+my $sql_handle;
+
+
+
+
+do	{
+	say ('Enter 1 for exporting a single SQL Plan from SQL Baseline '); 
+	say ('Enter 2 for exporting All SQL Plans from a SQL Baseline'); 
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+	
+	if ($choice eq 1)
+		{
+
+		print("Enter a SQL Plan Name:\n"); 
+		chomp($sql_plan = <STDIN>);
+		print("Enter a Dump file name:\n"); 
+		chomp($file_name = <STDIN>);
+		print("Enter a user/schema name in which staging table will be created (cannot be SYS):\n"); 
+		chomp($table_owner = <STDIN>);
+		$table_owner=uc($table_owner);
+		print("Enter a table name for the staging table:\n"); 
+		chomp($table_name = <STDIN>);
+		$table_name=uc($table_name);
+		print("Enter a tablespace name for that staging table: (user/schema should have privilege into that tbs) \n"); 
+		chomp($tablespace = <STDIN>);
+		$tablespace=uc($tablespace);
+		say("Temporary table name used : $table_name");
+		say("with user : $table_owner");
+		say("using tablespace : $tablespace");
+		say("The user : $table_owner  must have EXPORT/IMPORT privileges and the privilege to create table in tablespace : $tablespace");
+
+		$result_query=exec_sql_five_param($connect_string,'export_sql_baseline_plan.sql',$sql_plan,$table_name,$table_owner,$tablespace,$file_name);
+		print $result_query;	
+		}
+	elsif ($choice eq 2)
+	{
+		print("Enter a SQL handle for the SQL Baseline:\n"); 
+		chomp($sql_handle = <STDIN>);
+		print("Enter a Dump file name:\n"); 
+		chomp($file_name = <STDIN>);
+		$file_name=uc($file_name);
+		print("Enter a user/schema name in which staging table will be created (cannot be SYS):\n"); 
+		chomp($table_owner = <STDIN>);
+		$table_owner=uc($table_owner);
+		print("Enter a table name for the staging table:\n"); 
+		chomp($table_name = <STDIN>);
+		$table_name=uc($table_name);
+		print("Enter a tablespace name for that staging table: (user/schema should have privilege into that tbs) \n"); 
+		chomp($tablespace = <STDIN>);
+		$tablespace=uc($tablespace);		
+		say("Temporary table name used : $table_name");
+		say("with user : $table_owner");
+		say("using tablespace : $tablespace");
+		say("The user : $table_owner  must have EXPORT/IMPORT privileges and the privilege to create table in tablespace : $tablespace");
+
+		$result_query=exec_sql_five_param($connect_string,'export_sql_baseline_all_plans.sql',$sql_handle,$table_name,$table_owner,$tablespace,$file_name);
+		print $result_query;	
+	}
+	
+	
+	
+	} while ($choice ne 'q');
+
+
+}
+
+
+sub import_sql_baseline {
+
+say '----------------------------------------------------------------------';
+say '- Option: IMB  for Importing all SQL Baseline from a dump (Data Pump)  ';
+say '----------------------------------------------------------------------';
+
+my $result_query;
+my $sql_handle;
+my $file_name;
+my $table_owner;
+my $tablespace='USERS';
+
+
+	print("Enter the Dump file name to import:\n"); 
+	chomp($file_name = <STDIN>);
+	
+
+	print("Enter a user/schema name in which the staging table will be created:\n"); 
+	chomp($table_owner = <STDIN>);
+	$table_owner=uc($table_owner);
+
+	say("The user : $table_owner  must have IMPORT privileges and the privilege to create table in default tablespace ");
+
+	$result_query=exec_sql_two_param($connect_string,'import_sql_baseline_all_plans.sql',$file_name,$table_owner);
+	print $result_query;
+
+}
+
+
+
+
+
+
+sub create_sql_patch {
+
+
+say '----------------------------------------------------------------------';
+say '- Option: CRP  for Creating SQL Patch : WARNING: USE OF DBMS_SQLDIAG';
+say '----------------------------------------------------------------------';
+
+
+my $result_query;
+my $plan_hash_value;
+my $sql_id;
+my $hint;
+my $patchname;
+		print("To create a SQL Patch, the query should be in shared_pool/library cache prior execution this command.e\n"); 
+		print("If the cursor does not exist, it will fail.\n"); 
+		print("(the cursor's presence is not checked by this part of the shell)\n"); 
+		print("Therefore, you should have executed recently the query on which you want to create the SQL Patch\n"); 
+		print("Enter a SQL_ID on which the SQL patch will be created:\n"); 
+		chomp($sql_id = <STDIN>);
+		print("Enter a Hint you want to put on your query:\n"); 
+		chomp($hint = <STDIN>);
+		print("Give a name to you SQL Patch:\n"); 
+		chomp($patchname = <STDIN>);
+		# $result_query=exec_sql_three_param($connect_string,'create_sql_patch.sql',$sql_id,$hint,$patchname);
+		# print $result_query;
+		
+		
+		
+		
+	clean("create_sql_patch.sql");
+	clean("create_sql_patch.log");
+
+
+
+open (my $create_sql_patch, '>', 'create_sql_patch.sql') or die "Could not open file 'create_sql_patch.sql' $!";
+
+$create_sql_patch->say ("set feedback off");
+$create_sql_patch->say ("set sqlblanklines on");
+$create_sql_patch->say ("set serveroutput on");
+$create_sql_patch->say ("set verify off");
+$create_sql_patch->say ("spool create_sql_patch.log");
+$create_sql_patch->say ("declare");
+$create_sql_patch->say ("ret binary_integer;");
+$create_sql_patch->say ("l_sql_id varchar2(13);");
+$create_sql_patch->say ("l_name varchar2(40);");
+
+$create_sql_patch->say ("begin");
+$create_sql_patch->say ("l_sql_id := '$sql_id';");
+$create_sql_patch->say ("l_name := '$patchname';");
+$create_sql_patch->say ("dbms_output.put_line('SQL Patch creation ');");
+$create_sql_patch->say ("SYS.DBMS_SQLDIAG_INTERNAL.i_create_patch(");
+$create_sql_patch->say ("    sql_id    => l_sql_id,");
+$create_sql_patch->say ("    hint_text => '$hint',");
+$create_sql_patch->say ("    name      => l_name);");
+
+$create_sql_patch->say ("dbms_output.put_line(' ');");
+$create_sql_patch->say ("dbms_output.put_line('SQL Patch : '||l_name||' created.');");
+$create_sql_patch->say ("dbms_output.put_line(' ');");
+$create_sql_patch->say ("end;");
+$create_sql_patch->say ("/");
+$create_sql_patch->say ("spool off");
+$create_sql_patch->say ("exit;");
+
+$result_query=exec_sql($connect_string,'create_sql_patch.sql');
+print $result_query;
+		
+		
+$result_query=exec_sql($connect_string,'show_sql_patches.sql');
+print $result_query;		
+		
+		
+		
+		
+}
+
+sub drop_sql_patch {
+
+my $result_query;
+my $name;
+
+say '----------------------------------------------------------------------';
+say '- Option: DRP for dropping SQL Patches';
+say '- SQL File : drop_sql_patch.sql';
+say '----------------------------------------------------------------------';
+
+		print("Enter the SQL patch name to drop:\n"); 
+		chomp($name = <STDIN>);
+	
+$result_query=exec_sql_one_param($connect_string,'drop_sql_patch.sql',$name);
+print $result_query;	
+
+}
+
+sub show_sql_patch {
+
+my $result_query;
+
+
+say '----------------------------------------------------------------------';
+say '- Option: SHP for Showing all SQL Patches';
+say '- SQL File : show_sql_patches.sql';
+say '----------------------------------------------------------------------';
+
+
+	
+$result_query=exec_sql($connect_string,'show_sql_patches.sql');
+print $result_query;	
+
+}
+
+
+sub investigate {
+
+
+say '----------------------------------------------------------------------';
+say '- Option: INV  for Investigating general performance issues          ';
+say '               Attempts to find SQL statements with plan instability ';  
+say '               Search performed in AWR History Tables  ';  
+say '----------------------------------------------------------------------';
+
+my $result_query;
+my $object_name;
+my $sql_id;	
+my $min_stddev=2;
+my $min_etime=0.1;
+my $days_ago;
+my $object_name;
+my $instance_number;
+my $begin_snap;
+my $end_snap;
+
+do	{
+	say ('Enter 1 for scanning unstable execution plan : unstable_plans.sql'); 
+	say ('Enter 2 for detecting when a plan has changed : awr_plan_change.sql '); 
+	say ('Enter 3 for detecting which SQL queries have changed after a point in time (x days ago) : whats_changed.sql '); 
+	say ('Enter 4 for searching any plan related to an object (ie table) : awr_plan_change_on_object.sql '); 
+	say ('Enter 5 for finding the busiest time periods in AWR : dbtime.sql '); 
+	say ('Enter 6 for finding in AWR which parameter has changed in history  : parameters_mods.sql '); 
+
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+	if ($choice eq 1)
+		{
+		print("Enter a standard deviation (default 2) :\n"); 
+		chomp($min_stddev = <STDIN>);
+		print("Enter a minimum elapsed time (default 0.1 s) :\n"); 
+		chomp($min_etime = <STDIN>);
+		$result_query=exec_sql_two_param($connect_string,'unstable_plans.sql',$min_stddev,$min_etime);
+		print $result_query;
+		}
+	elsif ($choice eq 2)
+		{
+		clean("awr_plan_change.log");
+		print("Enter a SQL_ID:\n"); 
+		chomp($sql_id = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'awr_plan_change.sql',$sql_id);
+		print $result_query;
+		}
+	elsif ($choice eq 3)
+		{
+		print("Define a point in time from which you want to compare performance before and after (like 2 days ago, give number of days) :\n"); 
+		chomp($days_ago = <STDIN>);
+		print("Enter a standard deviation (default 2) :\n"); 
+		chomp($min_stddev = <STDIN>);
+		print("Enter a minimum elapsed time (default 0.1 s) :\n"); 
+		chomp($min_etime = <STDIN>);
+		$result_query=exec_sql_three_param($connect_string,'whats_changed.sql',$days_ago,$min_stddev,$min_etime);
+		print $result_query;
+		}
+	elsif ($choice eq 4)
+		{
+		print("Enter a table name on which you want to scan all queries variations :\n"); 
+		chomp($object_name = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'awr_plan_change_on_object.sql',$object_name);
+		print $result_query;
+		}
+	elsif ($choice eq 5)
+		{
+		print("Enter the instance_number (can be blank) :\n"); 
+		chomp($instance_number = <STDIN>);
+		print("Enter begin_snap (can be blank) :\n"); 
+		chomp($begin_snap = <STDIN>);
+		print("Enter end_snap (can be blank) :\n"); 
+		chomp($end_snap = <STDIN>);
+		print("IF SEVERAL BLANK VALUES INTRODUCED, THEN TYPE SEVERAL TIMES ENTER TO GET A RESPONSE :\n");
+		$result_query=exec_sql_three_param($connect_string,'dbtime.sql',$instance_number,$begin_snap,$end_snap);
+		print $result_query;
+		}
+	elsif ($choice eq 6)
+		{
+		parameter_check();
+		}
+	} while ($choice ne 'q');
+
+	
+	
+}
+
+
+
+
+
+
+sub parameter_check
+	{
+		say '----------------------------------------------------------------------';
+		say '- Option: for Checking the parameter changes on the instances          ';
+		say '- SQL File : parameters_mods.sql';
+		say '----------------------------------------------------------------------';
+
+my $result_query;
+
+		$result_query=exec_sql($connect_string,'parameters_mods.sql');
+		print $result_query;
+
+
+	}
+
+
+sub drop_baseline
+	{
+		say '----------------------------------------------------------------------';
+		say '- Option: DRB  for Dropping SQL Baseline          ';
+		say '- SQL File : drop_sql_baseline.sql';
+		say '----------------------------------------------------------------------';
+
+my $result_query;
+my $sql_handle;
+		print("Enter a SQL Handle:\n"); 
+		chomp($sql_handle = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'drop_sql_baseline.sql',$sql_handle);
+		print $result_query;
+
+
+	}
+	
+sub monitoring
+	{
+		say '----------------------------------------------------------------------';
+		say '- Option: MON  for Monitoring SQL Statement (SQL_ID)          ';
+		say '- SQL File : monitor_sql.sql WARNING: USE OF DBMS_SQLDIAG ' ;
+		say '- SQL File : rsm_html.sql';
+		say '----------------------------------------------------------------------';
+
+my $result_query;
+my $sql_id;
+
+do	{
+	say ('Enter 1 for Setting monitoring on SQL_ID : monitor_sql.sql'); 
+	say ('Enter 2 for Getting HTML Report on monitored SQL_ID : rsm_html.sql '); 
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+	
+	
+	if ($choice eq 1)
+		{
+		print("Enter a SQL_ID:\n"); 
+		chomp($sql_id = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'monitor_sql.sql',$sql_id);
+		print $result_query;
+		}
+	elsif ($choice eq 2)
+		{
+		print("Enter a SQL_ID:\n"); 
+		chomp($sql_id = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'rsm_html.sql',$sql_id);
+		print $result_query;
+		}
+		
+		
+	} while ($choice ne 'q');
+
+	}	
+
+
+sub suppress_cursor 
+	{
+		say '----------------------------------------------------------------------';
+		say '- Option: SUC for Suppressing Parent Cursor (all childs) (SQL_ID)          ';
+		say '- SQL File : suppress_cursor_from_lib_cache.sql';
+		say '----------------------------------------------------------------------';
+
+my $result_query;
+my $sql_id;
+
+do	{
+	say ('Enter 1 for suppressing Parent Cursor on SQL_ID : suppress_cursor_from_lib_cache.sql'); 
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+	
+	
+	if ($choice eq 1)
+		{
+		print("Enter a SQL_ID:\n"); 
+		chomp($sql_id = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'suppress_cursor_from_lib_cache',$sql_id);
+		print $result_query;
+		}
+		
+		
+	} while ($choice ne 'q');
+		
+	}
+
+
+
+sub finding_sql 
+	{
+		say '---------------------------------------------------------------------------------------------------------';
+		say '- Option: FSQ  for Finding SQL query in Library Cache, in AWR Repository or Statspack Snapshots          ';
+		say '---------------------------------------------------------------------------------------------------------';
+
+my $result_query;
+my $sql_id;
+
+do	{
+	say ('Enter FSQ for finding SQL query in Library Cache / cursor cache, Display Performance Indicators'); 
+	say ('Enter FSA for finding SQL query in AWR Repository (LICENSE = DIAG PACK), Display Performance Indicators'); 
+	say ('Enter FMS for finding SQL with Matching Signature from another SQL_ID in Library Cache ,  Display Performance Indicators');
+	say ('Enter FSS for finding SQL query with SQL text extract in Statspack Snapshots');
+	say ('Enter FMSSTA for finding SQL with Matching Signature from another SQL_ID in Statspack Snapshots');
+	say ('Enter q for going back to previous menu  ');
+	chomp($choice = <STDIN>); 
+	
+	
+	if ($choice eq 'FSQ')
+		{
+		find_sql;
+		}
+		
+	elsif ($choice eq 'FSA')
+	{
+		find_sql_awr;
+	}
+	
+	elsif ($choice eq 'FMS')
+	{
+		find_matching_signature;
+	}
+	
+	elsif ($choice eq 'FSS')
+	{
+		find_sql_statspack;
+	}
+	
+	elsif ($choice eq 'FMSSTA')
+	{
+		find_matching_signature_statspack;
+	}
+	
+	} while ($choice ne 'q');
+		
+	}
+
+
+
+sub displaying_exec_plan 
+	{
+		say '-----------------------------------------------------------------------------------------';
+		say '- Option: DEP for displaying exec plan from Library Cache, AWR, Statspack or SQL Baseline';
+		say '-----------------------------------------------------------------------------------------';
+
+my $result_query;
+my $sql_id;
+
+do	{
+	say ('Enter DPL for displaying exec plan from Library Cache / cursor cache'); 
+	say ('Enter DPA for displaying exec plan from AWR Repository (LICENSE = DIAG PACK)'); 
+	say ('Enter DPS for displaying exec plan from Statspack Snapshots'); 
+	say ('Enter DPB for displaying exec plan from a SQL Baseline  ');
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+	
+	
+	if ($choice eq 'DPL')
+		{
+		display_plan;
+		}
+		
+	elsif ($choice eq 'DPA')
+	{
+		display_plan_awr;
+	}
+	
+	elsif ($choice eq 'DPS')
+	{
+		display_plan_statspack;
+	}
+	
+	elsif ($choice eq 'DPB')
+	{
+		display_plan_baseline;
+	}
+
+	} while ($choice ne 'q');
+		
+	}
+
+
+sub sql_baseline_menu {
+
+my $choice;
+
+do	{
+
+say '----------------------------------------------------------------------';
+say '- Option: SBA  for menu related to SQL Baseline          ';
+say '               create SQL Baseline, showing SQL Baseline ';  
+say '               dropping SQL Baseline, Exporting or Importing SQL Baseline  ';  
+say '----------------------------------------------------------------------';
+
+	say ('Enter: SHB  for Showing SQL Baselines');
+    say ('Enter: CRB  for Creating SQL Baseline');
+	say ('Enter: SWB  for Swapping bad Execution Plan with good Execution Plan while creating SQL Baseline');
+	say ('Enter: DRB  for Dropping SQL Baseline');
+	say ('Enter: ADB  for Adding SQL Plan to SQL Baseline (ENTERPRISE EDITION)');
+	say ('Enter: ALB  for Altering SQL Plan from SQL Baseline');
+	say ('Enter: EXB  for Exporting SQL Plan from SQL Baseline');
+	say ('Enter: IMB  for Importing all SQL Baseline from a dump (Data Pump)');
+		say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+	if ($choice eq 'SHB')
+		{
+		show_sql_baseline();
+		}
+	elsif ($choice eq 'CRB')
+		{
+		create_sql_baseline();
+		}
+	elsif ($choice eq 'SWB')
+		{
+		swap_good_bad_plan_sql_baseline_cursor_cache();
+		}
+	elsif ($choice eq 'DRB')
+		{
+		drop_baseline();
+		}
+	elsif ($choice eq 'ADB')
+		{
+		add_sql_baseline();
+		}
+	elsif ($choice eq 'ALB')
+		{
+		alter_sql_baseline();
+		}
+	elsif ($choice eq 'EXB')
+		{
+		export_sql_baseline();
+		}
+	elsif ($choice eq 'IMB')
+		{
+		import_sql_baseline();
+		}		
+	} while ($choice ne 'q');
+	
+}
+
+
+
+
+
+
+
+sub show_spd 
+	{
+		say '----------------------------------------------------------------------------';
+		say ('SHSPD for Showing all SQL Plan directive related to a schema : find_spd.sql'); 
+		say '----------------------------------------------------------------------------';
+my $result_query;
+my $schema;
+
+
+
+		print("Enter a schema name:\n"); 
+		chomp($schema = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'find_spd.sql',$schema);
+		print $result_query;
+		
+
+	}
+
+
+sub drop_spd 
+	{
+		say '-------------------------------------------------------------------------';
+		say ('DRSPD for dropping SQL Plan directive related to an object: drop_spd.sql'); 
+		say '-------------------------------------------------------------------------';
+my $result_query;
+my $object_name;
+my $schema_name;
+
+
+
+		print("Enter a schema name:\n"); 
+		chomp($schema_name = <STDIN>);
+		print("Enter an object name:\n"); 
+		chomp($object_name = <STDIN>);
+		$result_query=exec_sql_two_param($connect_string,'drop_spd.sql',$schema_name,$object_name);
+		print $result_query;
+		
+
+	}
+
+
+
+
+
+sub sql_plan_directive_menu {
+
+my $choice;
+
+do	{
+	
+say '----------------------------------------------------------------------';
+say '- Option: SPD  for menu related to SQL Plan directive          ';
+say '               show SQL Plan directive related to schema ';  
+say '               dropping SQL Plan directive to object  ';  
+say '----------------------------------------------------------------------';	
+	
+	
+	say ('Enter SHSPD for Showing all SQL Plan directive related to a schema : find_spd.sql'); 
+	say ('Enter DRSPD for dropping SQL Plan directive related to an object: drop_spd.sql '); 
+			say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+	if ($choice eq 'SHSPD')
+		{
+		show_spd();
+		}
+	elsif ($choice eq 'DRSPD')
+		{
+		drop_spd();
+		}
+	
+	} while ($choice ne 'q');
+	
+}
+
+
+sub statspack_menu {
+
+my $choice;
+
+do	{
+	
+say '----------------------------------------------------------------------';
+say '- Option: STP  for the Statspack menu          ';
+say '               Find, Display or Investigation using Statspack history,  ';  
+say '                             ';  
+say '----------------------------------------------------------------------';	
+	
+	
+	say ('Enter STPSNAP for creating a Statspack Snapshot');
+	say ('Enter FSS for finding SQL query with SQL text extract in Statspack Snapshots');
+	say ('Enter FMSSTA for finding SQL with Matching Signature from another SQL_ID in Statspack Snapshots');
+	say ('Enter STPCHANGE for detecting various plans for a SQL_ID (Display Performance Indicators) : plan_change_statspack.sql '); 
+	say ('Enter DPS for displaying exec plan from Statspack Snapshots'); 
+    say ('Enter STPSCAN for scanning unstable execution plans : unstable_plans_statspack.sql'); 
+	say ('Enter STPCOMPARE for detecting which SQL queries have changed after a point in time (x days ago) : whats_changed_statspack.sql ');
+	say ('Enter q for going back to main menu  ');	
+	chomp($choice = <STDIN>); 
+
+ if  ($choice eq 'STPSNAP')
+		{
+    my $result_query;
+    $result_query=exec_sql($connect_string,'create_statspack_snapshot.sql');
+    print $result_query;	
+		}
+	
+	elsif ($choice eq 'FSS')
+		{
+		find_sql_statspack;
+		}
+	
+	elsif ($choice eq 'FMSSTA')
+		{
+		find_matching_signature_statspack;
+		}
+
+	elsif ($choice eq 'DPS')
+		{
+		display_plan_statspack;
+		}
+	elsif ($choice eq 'STPSCAN')
+		{
+		print("Enter a standard deviation (default 2) :\n"); 
+		chomp($min_stddev = <STDIN>);
+		print("Enter a minimum elapsed time (default 0,1 s) :\n"); 
+		chomp($min_etime = <STDIN>);
+		$result_query=exec_sql_two_param($connect_string,'unstable_plans_statspack.sql',$min_stddev,$min_etime);
+		print $result_query;
+		}
+	elsif ($choice eq 'STPCHANGE')
+		{
+		print("Enter a SQL_ID:\n"); 
+		chomp($sql_id = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'plan_change_statspack.sql',$sql_id);
+		print $result_query;
+		}
+	elsif ($choice eq 'STPCOMPARE')
+		{
+		print("Define a point in time from which you want to compare performance before and after (like 2 days ago, give number of days) :\n"); 
+		chomp($days_ago = <STDIN>);
+		print("Enter a standard deviation (default 2) :\n"); 
+		chomp($min_stddev = <STDIN>);
+		print("Enter a minimum elapsed time (default 0,1 s) :\n"); 
+		chomp($min_etime = <STDIN>);
+		$result_query=exec_sql_three_param($connect_string,'whats_changed_statspack.sql',$days_ago,$min_stddev,$min_etime);
+		print $result_query;
+		}
+	
+	} while ($choice ne 'q');
+	
+}
+
+
+
+
+sub sql_patch_menu {
+
+
+my $choice;
+
+
+do	{
+	
+	
+say '----------------------------------------------------------------------';
+say '- Option: SPA  for menu related to SQL Patch          ';
+say '               create SQL Patch, showing SQL Patch ';  
+say '               dropping SQL Patch  ';  
+say '----------------------------------------------------------------------';
+
+	
+	say ('Enter SHP for Showing all SQL Patches : show_sql_patches.sql'); 
+	say ('Enter CRP for Creating SQL Patch : WARNING: USE OF DBMS_SQLDIAG : dynamic SQL '); 
+	say ('Enter DRP for dropping SQL Patches : drop_sql_patch.sql '); 
+		say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+	if ($choice eq 'SHP')
+		{
+		show_sql_patch();
+		}
+	elsif ($choice eq 'CRP')
+		{
+		create_sql_patch();
+		}
+	elsif ($choice eq 'DRP')
+		{
+		drop_sql_patch();
+		}
+	} while ($choice ne 'q');
+	
+}
+
+
+
+sub sql_set_menu {
+
+my $sql_set_name;
+my $sql_id;
+my $begin_snap;
+my $end_snap;
+my $choice;
+my $file_name;
+my $table_owner;
+my $table_name;
+my $tablespace;
+
+do	{	
+say '----------------------------------------------------------------------';
+say '- Option: SQS  for menu related to SQL Set          ';
+say '               create SQL Set, showing SQL Set ';  
+say '               dropping SQL Set  ';  
+say '----------------------------------------------------------------------';
+
+	
+	say ('Enter 1 for Creating SQL Set from AWR with begin_snap and end_snap: create_sql_set_awr_snap.sql'); 
+	say ('Enter 2 for Creating SQL Set from Library Cache : create_sql_set_library_cache.sql '); 
+	say ('Enter 3 for Dropping SQL Set : drop_sql_set.sql '); 
+	say ('Enter 4 for Listing SQL Sets : show_sql_set.sql '); 
+	say ('Enter 5 for Finding SQL_ID and Plans in SQL Set : find_sql_in_sql_set.sql '); 
+	say ('Enter 6 for Exporting SQL Set : export_sql_set.sql '); 
+		say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+
+	if ($choice eq 1)
+		{
+		print("Enter a Sql Set name :\n"); 
+		chomp($sql_set_name = <STDIN>);
+		print("Enter a begin snapid :\n"); 
+		chomp($begin_snap = <STDIN>);
+		print("Enter an end snapid :\n"); 
+		chomp($end_snap = <STDIN>);
+		$result_query=exec_sql_three_param($connect_string,'create_sql_set_awr_snap.sql',$sql_set_name,$begin_snap,$end_snap);
+		print $result_query;
+		}
+	elsif ($choice eq 2)
+		{
+		print("Enter a Sql Set name :\n"); 
+		chomp($sql_set_name = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'create_sql_set_library_cache.sql',$sql_set_name);
+		print $result_query;
+		}
+	elsif ($choice eq 3)
+		{
+		print("Enter a Sql Set name to drop :\n"); 
+		chomp($sql_set_name = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'drop_sql_set.sql',$sql_set_name);
+		print $result_query;
+		}
+	elsif ($choice eq 4)
+		{
+		$result_query=exec_sql($connect_string,'show_sql_set.sql');
+		print $result_query;
+		}
+	elsif ($choice eq 5)
+		{
+		print("Enter a Sql Set name :\n"); 
+		chomp($sql_set_name = <STDIN>);
+		print("Enter a SQL_ID :\n"); 
+		chomp($sql_id = <STDIN>);
+		$result_query=exec_sql_two_param($connect_string,'find_sql_in_sql_set.sql',$sql_set_name,$sql_id);
+		print $result_query;
+		}
+	elsif ($choice eq 6)
+		{
+		
+		print("Enter a Sql Set name :\n"); 
+		chomp($sql_set_name = <STDIN>);
+		print("Enter a Dump file name:\n"); 
+		chomp($file_name = <STDIN>);
+		$file_name=uc($file_name);
+		print("Enter a user/schema name in which staging table will be created (cannot be SYS):\n"); 
+		chomp($table_owner = <STDIN>);
+		$table_owner=uc($table_owner);
+		print("Enter a table name for the staging table:\n"); 
+		chomp($table_name = <STDIN>);
+		$table_name=uc($table_name);
+		print("Enter a tablespace name for that staging table: (user/schema should have privilege into that tbs) \n"); 
+		chomp($tablespace = <STDIN>);
+		$tablespace=uc($tablespace);		
+		say("Temporary table name used : $table_name");
+		say("with user : $table_owner");
+		say("using tablespace : $tablespace");
+		say("The user : $table_owner  must have EXPORT/IMPORT privileges and the privilege to create tables in tablespace : $tablespace");
+
+		$result_query=exec_sql_five_param($connect_string,'export_sql_set.sql',$sql_set_name,$table_name,$table_owner,$tablespace,$file_name);
+		print $result_query;
+		
+		}
+	} while ($choice ne 'q');
+	
+}
+
+
+
+
+
+sub statistics 
+	{
+
+my $result_query;
+my $schema;
+my $tab_name;
+
+do	{
+	
+		say '----------------------------------------------------------------------';
+		say '- Option: STA for Showing/modifying statistics for a table (and indexes)          ';
+		say '- SQL File : table_stats_complete.sql';
+		say '----------------------------------------------------------------------';
+
+	
+	say ('Enter 1 for Showing statistics for a table (and indexes)  : table_stats_complete.sql'); 
+	say ('Enter 2 for Showing statistics history for all tables used by a query (SQL_ID)  : stats_hist.sql  (LICENSE = DIAG PACK)'  ); 
+	say ('Enter 3 for Restoring statistics for a table (with associated index and columns stats) to a point in time (date format : 25/12/2024-17-10-32) : restore_table_stats.sql'); 
+    say ('Enter 4 for Locking statistics on a table : lock_table_stats.sql'); 
+	say ('Enter 5 for UnLocking statistics on a table : unlock_table_stats.sql'); 
+	say ('Enter q for going back to main menu  ');
+	chomp($choice = <STDIN>); 
+	
+	
+	if ($choice eq 1)
+		{
+		print("Enter a schema name :\n"); 
+		chomp($schema = <STDIN>);
+		print("Enter a table name :\n"); 
+		chomp($tab_name = <STDIN>);
+		$result_query=exec_sql_two_param($connect_string,'table_stats_complete',$schema,$tab_name);
+		print $result_query;
+		}
+
+	if ($choice eq 2)
+		{
+		print("Enter a SQL_ID :\n"); 
+		chomp($sql_id = <STDIN>);
+		$result_query=exec_sql_one_param($connect_string,'stats_hist',$sql_id);
+		print $result_query;
+		}
+
+
+
+
+	if ($choice eq 3)
+		{
+		print("Enter a schema name :\n"); 
+		chomp($schema = <STDIN>);
+		print("Enter a table name :\n"); 
+		chomp($tab_name = <STDIN>);
+		print("Enter a date and time (format 'DD/MM/YYYY-HH24-MI-SS' , E.G.: : 25/12/2024-17-10-32 ) \n"); 
+		chomp($date = <STDIN>);
+		$result_query=exec_sql_three_param($connect_string,'restore_table_stats',$schema,$tab_name,$date);
+		print $result_query;
+		}
+
+
+
+	if ($choice eq 4)
+		{
+		print("Enter a schema name :\n"); 
+		chomp($schema = <STDIN>);
+		print("Enter a table name :\n"); 
+		chomp($tab_name = <STDIN>);
+		$result_query=exec_sql_two_param($connect_string,'lock_table_stats',$schema,$tab_name);
+		print $result_query;
+		}
+			
+	if ($choice eq 5)
+		{
+		print("Enter a schema name :\n"); 
+		chomp($schema = <STDIN>);
+		print("Enter a table name :\n"); 
+		chomp($tab_name = <STDIN>);
+		$result_query=exec_sql_two_param($connect_string,'unlock_table_stats',$schema,$tab_name);
+		print $result_query;
+		}
+				
+	} while ($choice ne 'q');
+		
+	}
+
+
+
+
+
+
+
+
+sub print_menu {
+say '***********************************************************************************************';
+say '##########  MENU ##############################################################################';
+say '***********************************************************************************************';
+say '     option: ESQ  for Executing SQL statement or a SQL file ';
+say '     option: FLU  for Flushing SQL statement in History (AWR SnapShot or Statspack Snapshot)';
+say '     option: FSQ  for Finding SQL query in Library Cache, AWR Repository or Statspack Snapshots ';
+#say '     option: FSA  for Finding SQL query in AWR Repository (LICENSE = DIAG PACK)';
+say '     option: DEP  for Displaying Execution Plan from Library Cache, AWR, Statspack or from a SQL Baseline';
+#say '     option: DPL  for Displaying Execution Plan from Library Cache';
+#say '     option: DPA  for Displaying Execution Plan from AWR Repository (LICENSE = DIAG PACK)';
+#say '     option: DPB  for Displaying Execution Plan from SQL Baseline';
+say '     option: SBA  for SQL Baselines menu';
+# say '     option: SHB  for Showing SQL Baselines';
+# say '     option: CRB  for Creating SQL Baseline';
+# say '     option: SWB  for Swapping bad Execution Plan with good Execution Plan while creating SQL Baseline';
+# say '     option: DRB  for Dropping SQL Baseline';
+# say '     option: ADB  for Adding SQL Plan to SQL Baseline (ENTERPRISE EDITION)';
+# say '     option: ALB  for Altering SQL Plan from SQL Baseline';
+# say '     option: EXB  for Exporting SQL Plan from SQL Baseline';
+# say '     option: IMB  for Importing all SQL Baseline from a dump (Data Pump)';
+#say '     option: CRP  for Creating SQL Patch';
+#say '     option: DRP  for Dropping SQL Patch';
+#say '     option: SHP  for Showing SQL Patch';
+say '     option: SPA  for SQL Patch menu';
+say '     option: SQS  for SQL Set menu';
+say '     option: SPD  for SQL Plan Directives menu';
+say '     option: STP  for Statspack menu';
+say '     option: INV  for Investigating general performance issues (LICENSE = DIAG PACK)';
+#say '     option: PAR  for Checking the parameters changes on the instances';
+#say '     option: MON  for Monitoring a SQL statement (LICENSE = TUNING PACK)';
+say '     option: SUC  for Suppressing Parent Cursor (and child cursors)';
+say '     option: STA  for Statistics menu ';
+}
+
+sub print_memory { }
+
+sub clear_screen
+{
+if ($^O eq 'MSWin32')
+{
+print "\033[2J";
+print "\033[0;0H"; 
+`cls`;
+}
+else
+{
+print "\033[2J";
+print "\033[0;0H"; 
+`clear`;
+}
+
+# say 'clear screen';
+#$scr->clrscr();
+}
+
+
+#
+# Ctrl+C signal
+#
+$SIG{INT}= \&close_connection;
+
+sub close_connection {
+		say 'INFO : End of Performance Tool Kit';
+		say 'INFO : I hope you have enjoyed it !';
+		say_time();
+		$dbh->disconnect();
+        exit 0;
+}
+
+sub connect_db {
+$dbh = DBI->connect('dbi:Oracle:',"", "", { ora_session_mode => ORA_SYSDBA });
+}
+
+sub check_instance_type {
+my $inst_type=$_[0];
+debug("Instance Type: ".$inst_type);
+my $sql1 = $dbh->prepare('select value from v$parameter where name=\'instance_type\' ');
+$sql1->execute;
+
+if ( $sql1->fetchrow_array =~ /$inst_type/i) {
+	print "INFO : You are connected to a ".$inst_type." instance \n";
+        $sql1->finish;
+}
+else {
+        print "\n\n ERROR : You must connect to a ".$inst_type." instance \n\n";
+        $sql1->finish;
+        $dbh->disconnect();
+        exit 1;
+}
+}
+
+sub check_version_type {
+
+my $sql1 = $dbh->prepare('SELECT BANNER  FROM V$VERSION');
+$sql1->execute;
+my ($edition) = $sql1->fetchrow_array();
+print "INFO : You are connected to this edition: ".$edition."\n";
+       $sql1->finish;
+
+print "INFO : Multitenant Database: $PTK_MULTITENANT_DB\n";
+if ($PTK_MULTITENANT_DB eq 'YES')
+	{
+	print "INFO : PDB Database target: $ORACLE_PDB_SID\n";
+	if ($PTK_STATSPACK eq 'YES')
+	{
+		print "INFO : Statspack installed in the PDB \n";	
+	}
+}
+
+}
+
+sub check_database_name {
+
+my $sql1 = $dbh->prepare('SELECT DB_UNIQUE_NAME  FROM V$database');
+$sql1->execute;
+my ($dbunique) = $sql1->fetchrow_array();
+print "INFO : You are connected to this Database: ".$dbunique."\n";
+       $sql1->finish;
+
+}
+
+
+
+
+## Main
+
+# variables locales ORACLE_HOME et ORACLE_SID
+	#$ENV{ORACLE_HOME}=$ORACLE_HOME;
+		# $ORACLE_HOME=$ENV{ORACLE_HOME};
+    # require Term::ReadKey;
+
+    # print "Entrer ORACLE_SID :\n";
+    # my $ORACLE_SID = Term::ReadKey::ReadLine(0);
+    # # Rest the terminal to what it was previously doing
+
+    # # The one you typed didn't echo!
+    # print "\n";
+    # # get rid of that pesky line ending (and works on Windows)
+    # $ORACLE_SID =~ s/\R\z//;
+
+$ORACLE_SID=$ENV{ORACLE_SID};
+$ORACLE_HOME=$ENV{ORACLE_HOME};
+
+
+
+connect_db;
+select STDOUT;
+say 'INFO : ***********************************************************************************';
+say 'INFO : Performance Tool Kit';
+say "INFO : Script Version : $perl_script_version";
+say "INFO : ORACLE_SID (instance name) : $ORACLE_SID"; 
+say "INFO : ORACLE_HOME : $ORACLE_HOME"; 
+say "INFO : Connect string  : $connect_string "; 
+check_instance_type($inst_type);
+check_version_type;
+check_database_name;
+say "INFO : CAVEAT : Some options in the menu may require DIAGNOSTIC PACK, "; 
+say "INFO : CAVEAT : or TUNING PACK and some options are not allowed for Standard Edition 2. "; 
+say "INFO : CAVEAT : Make sure to have the right licenses."; 
+say "INFO : CAVEAT : The tool creator cannot be responsible for your misusage, your careless attitude, "; 
+say "INFO : CAVEAT : your lack of professionalism. (French Humour)  "; 
+say 'INFO : ***********************************************************************************';
+say_time();
+
+
+
+
+
+
+
+
+
+
+open (my $LOGFILE, '>>',$logfile_name);
+# *STDOUT = $LOGFILE;
+# *STDERR = $LOGFILE;
+
+select STDOUT;
+select STDERR;
+
+do 
+{
+#clear_screen();
+
+#say '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$';
+
+print_menu();
+print_memory();
+$response=prompt_action();
+
+my %actions = (
+    'ESQ' => \&execute_sql,
+    'FLU' => \&snapshot,
+    'FSQQ' => \&find_sql,
+    'FSQ' => \&finding_sql,
+    'FSA' => \&find_sql_awr,
+    'FMS' => \&find_matching_signature,
+    'DEP' => \&displaying_exec_plan,
+    'DPL' => \&display_plan,
+    'DPA' => \&display_plan_awr,
+    'DPS' => \&display_plan_statspack,
+    'DPB' => \&display_plan_baseline,
+    'SBA' => \&sql_baseline_menu,
+    'SHB' => \&show_sql_baseline,
+    'CRB' => \&create_sql_baseline,
+    'ADB' => \&add_sql_baseline,
+    'ALB' => \&alter_sql_baseline,
+    'SWB' => \&swap_good_bad_plan_sql_baseline_cursor_cache,
+    'EXB' => \&export_sql_baseline,
+    'IMB' => \&import_sql_baseline,
+    'CRP' => \&create_sql_patch,
+    'DRP' => \&drop_sql_patch,
+    'SHP' => \&show_sql_patch,
+    'SPA' => \&sql_patch_menu,
+    'SQS' => \&sql_set_menu,
+    'SPD' => \&sql_plan_directive_menu,
+    'STP' => \&statspack_menu,
+    'INV' => \&investigate,
+    'PAR' => \&parameter_check,
+    'DRB' => \&drop_baseline,
+    'MON' => \&monitoring,
+    'SUC' => \&suppress_cursor,
+    'STA' => \&statistics,
+);
+
+if (exists $actions{$response}) {
+    $actions{$response}->();
+} else {
+    $response = 'Q';
+}
+
+} while ($response ne 'Q');
+
+
+
+# # Creation/Preparation du fichier sql a lancer
+# # nom du fichier : request.sql
+# open my $of, ">", "request.sql";
+# $of->say($sqlplus_settings);
+# $of->say("select * from v\$instance;");
+# $of->say("exit;");
+# close $of;
+
+
+
+
+say 'INFO : End of Performance Tool Kit';
+say 'INFO : I hope you have enjoyed it !';
+say_time();
+
+
+$dbh->disconnect();
+
+
+

@@ -1,0 +1,101 @@
+
+
+
+	 when ('SSQ')   {  awr_snapshot(); }  => snapshot statspack , statspack_snapshot  => 1 H
+	 => DONE => create_statspack_snapshot.sql
+	 
+	 
+	 when ('FSQQ') 	{  find_sql(); }  => find SQL_ID in statspack => 4 H
+
+find_sql_awr_template.sql 
+=> DONE  => find_sql_statspack_template.sql 
+
+
+	 
+	 
+     when ('FSQ') 	{  finding_sql(); }
+	 when ('FSA') 	{  find_sql_awr(); }
+	 when ('FMS') 	{  find_matching_signature(); } => find FORCE_MATCHING_SIGNATURE et EXACT_MATCHING_SIGNATURE  
+	 in statspack : STATS$SQL_SUMMARY => 3H
+=> DONE 	 => find_matching_signature_statspack.sql
+	 
+	 
+	 when ('DEP') 	{  displaying_exec_plan(); }   => display plan in statspack => 
+	 
+	 => DONE   => get_plan_statspack.sql
+
+	 
+     when ('DPL') 	{  display_plan(); }
+	 when ('DPA') 	{  display_plan_awr(); }
+	 when ('DPB') 	{  display_plan_baseline(); }
+	 
+	 
+	 when ('SBA')   {  sql_baseline_menu(); }
+	 when ('SHB') 	{  show_sql_baseline(); }
+     when ('CRB') 	{  create_sql_baseline(); }  => create sql_baseline from statspack ?? => try to recreate exec plan => 3H
+	 
+	 
+
+	 
+
+
+	 when ('INV') 	{  investigate(); }
+	 
+	 => unstable_plans.sql statspack    => 5 H
+	 
+	 DONE => unstable_plans_statspack.sql
+	 
+	 
+	 
+	 => awr_plan_change.sql in statspack => 5 H
+	 
+	 => DONE =>   plan_change_statspack.sql   
+	 
+	 
+	 
+	 => whats_changed.sql in statspack 
+	 => awr_plan_change_on_object.sql in statspack 
+	 => dbtime.sql ???????????
+	 => parameters_mods.sql   => STATS$PARAMETER => 5 H
+	 
+	 when ('STA') 	{  statistics(); }
+	 
+	 
+	 
+	 
+select fsp.snap_id
+     , to_char(s.snap_time, 'DD-Mon-YY HH24:MI') snap_time
+     , to_char(fsp.last_active_time, 'DD-Mon-YY HH24:MI') last_act_time
+     , fsp.plan_hash_value
+	 , fsp.SQL_ID
+     , lpad(decode(fsp.cost
+                  , null, ' '
+                  , -9,   ' '
+                  , decode(  sign(cost-10000000)
+                           , -1, cost||' '
+                           , decode(  sign(cost-1000000000), -1, trunc(cost/1000000)||'M'
+                                    , trunc(cost/1000000000)||'G'
+                                   )
+                          )
+                  ), 10) cost
+  from (select min(snap_id) snap_id
+             , dbid
+             , instance_number
+             , plan_hash_value
+			 , SQL_ID
+             , cost
+             , max(last_active_time) last_active_time
+          from stats$sql_plan_usage spu
+         where old_hash_value  = &&hash_value
+           and text_subset     = '&&text_subset'
+           and dbid            = &&dbid
+           and instance_number = &&inst_num
+         group by plan_hash_value, cost, dbid, instance_number
+       ) fsp
+       , stats$snapshot s
+ where s.snap_id(+)             = fsp.snap_id
+   and s.dbid(+)                = fsp.dbid
+   and s.instance_number(+)     = fsp.instance_number
+ order by fsp.snap_id, fsp.plan_hash_value;
+
+	 

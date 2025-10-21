@@ -1,0 +1,140 @@
+
+https://www.dbi-services.com/blog/statspack-with-oracle-database-19c-and-multitenant/
+
+
+export ORACLE_PDB_SID=IMPPDB1;
+
+-- if needed , stop AWR reports :
+alter system set control_management_pack_access='NONE' scope=spfile;
+
+
+
+create tablespace PERFSTAT2 datafile size 100m autoextend on maxsize 5G;
+
+
+-- Remove previously installed statspack if needed
+@?/rdbms/admin/spdrop
+
+
+@$ORACLE_HOME/rdbms/admin/spcreate.sql
+
+Entrez une valeur pour perfstat_password : PerfStat123#
+
+
+-- Increase level of metrics
+exec STATSPACK.MODIFY_STATSPACK_PARAMETER (i_snap_level=>7,i_modify_parameter=>'true', i_instance_number=>null);
+
+
+
+
+Let’s allow the user PERFSTAT to create jobs:
+
+grant create job to perfstat;
+
+
+conn perfstat/PerfStat123#
+show user
+
+
+-- Create snapshot job using scheduler - every fifteen minutes
+exec dbms_scheduler.create_program(program_name => 'SP_SNAP_PROG', program_type => 'STORED_PROCEDURE', program_action => 'PERFSTAT.statspack.snap', number_of_arguments => 0, enabled => FALSE);
+exec dbms_scheduler.enable(name => 'SP_SNAP_PROG');
+exec dbms_scheduler.create_schedule (schedule_name => 'SP_SNAP_SCHED', repeat_interval => 'freq=hourly; byminute=0,15,30,45; bysecond=0',end_date => null, comments => 'Schedule for Statspack snaps');
+exec dbms_scheduler.create_job (job_name => 'SP_SNAP_JOB', program_name => 'SP_SNAP_PROG', schedule_name => 'SP_SNAP_SCHED',  enabled => TRUE, auto_drop => FALSE, comments => 'Statspack Job for snaps');
+
+Let’s check the scheduling of this job:
+
+set lines 140
+col owner for a10
+col job_name for a15
+col program_name for a20
+col first for a18
+col next for a18
+col last for a18
+select OWNER, JOB_NAME, PROGRAM_NAME, to_char(START_DATE,'YYYY/MM/DD HH24:MI') "FIRST", to_char(NEXT_RUN_DATE,'YYYY/MM/DD HH24:MI') "NEXT", to_char(LAST_START_DATE,'YYYY/MM/DD HH24:MI') "LAST" from dba_scheduler_jobs where owner='PERFSTAT';
+
+
+
+-- Create a procedure for the purge
+create or replace procedure extended_purge(
+num_days IN number
+)
+is
+BEGIN
+  statspack.purge(i_num_days => num_days, i_extended_purge => TRUE);
+END extended_purge;
+/
+
+-- Test this procedure if needed
+-- exec extended_purge(30);
+
+
+-- Create snapshot job using scheduler - every Sunday at 0:20AM - keep 30 days of snapshots
+exec dbms_scheduler.create_program(program_name => 'SP_PURGE_PROG', program_type => 'STORED_PROCEDURE', program_action => 'PERFSTAT.extended_purge', number_of_arguments => 1, enabled => FALSE);
+exec DBMS_SCHEDULER.define_program_argument (program_name => 'SP_PURGE_PROG', argument_name => 'i_num_days', argument_position => 1, argument_type => 'NUMBER', default_value => 30);
+exec dbms_scheduler.enable(name => 'SP_PURGE_PROG');
+exec dbms_scheduler.create_schedule (schedule_name => 'SP_PURGE_SCHED', repeat_interval =>  'freq=weekly; byday=SUN; byhour=0; byminute=20',end_date => null, comments => 'Schedule for Statspack purge');
+exec dbms_scheduler.create_job (job_name => 'SP_PURGE_JOB', program_name => 'SP_PURGE_PROG', schedule_name => 'SP_PURGE_SCHED',  enabled => TRUE, auto_drop => FALSE, comments => 'Statspack Job for purge');
+
+
+
+-- Check jobs's scheduling
+set lines 140
+col owner for a10
+col job_name for a15
+col first for a18
+col next for a18
+col last for a18
+col program_name for a20
+select OWNER, JOB_NAME, PROGRAM_NAME, to_char(START_DATE,'YYYY/MM/DD HH24:MI') "FIRST", to_char(NEXT_RUN_DATE,'YYYY/MM/DD HH24:MI') "NEXT", to_char(LAST_START_DATE,'YYYY/MM/DD HH24:MI') "LAST"  from dba_scheduler_jobs where owner='PERFSTAT';
+
+
+
+ALTER TABLE perfstat.stats$sql_plan ADD timestamp INVISIBLE AS (cast(NULL AS DATE));
+
+
+
+select * from table(dbms_xplan.display(
+  table_name   => 'perfstat.stats$sql_plan',
+  statement_id => null,
+  format       => 'ALL',
+  filter_preds => 'plan_hash_value = 3284627250'
+  ));
+
+
+3284627250
+
+
+
+https://forums.oracle.com/ords/apexds/post/how-to-create-outline-from-perfstat-stats-sql-plan-table-4518
+
+
+
+To drop job :
+
+
+SQL> exec dbms_scheduler.drop_job (job_name => 'SP_SNAP_JOB');
+
+Procedure PL/SQL terminee avec succes.
+
+SQL>
+SQL>
+SQL>
+SQL> set lines 140
+col owner for a10
+col job_name for a15
+col first for a18
+col next for a18
+col last for a18
+col program_name for a20
+select OWNER, JOB_NAME, PROGRAM_NAME, to_char(START_DATE,'YYYY/MM/DD HH24:MI') "FIRST", to_char(NEXT_RUN_DATE,'YYYY/MM/DD HH24:MI') "NEXT", to_char(LAST_START_DATE,'YYYY/MM/DD HH24:MI') "LAST"  from dba_scheduler_jobs where owner='PERFSTAT';
+SQL> SQL> SQL> SQL> SQL> SQL> SQL>
+OWNER      JOB_NAME        PROGRAM_NAME         FIRST              NEXT               LAST
+---------- --------------- -------------------- ------------------ ------------------ ------------------
+PERFSTAT   SP_PURGE_JOB    SP_PURGE_PROG        2025/03/16 00:20   2025/10/12 00:20   2025/10/09 09:19
+
+???
+exec dbms_scheduler.drop_schedule(schedule_name => 'SP_PURGE_SCHED');
+exec dbms_scheduler.disable(name => 'SP_PURGE_PROG');
+
+???

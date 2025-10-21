@@ -1,0 +1,48 @@
+alter session set current_schema=OLAP;
+
+
+**creation de table ***
+CREATE TABLE OLAP.tx(n NOT NULL) AS SELECT object_id FROM all_objects;
+
+**creation d'index ***
+CREATE INDEX OLAP.ind_t_n1 ON OLAP.tx(n);
+ 
+** execution *****
+SELECT count(*) FROM OLAP.tx WHERE n > 0;
+
+** find de la requete dans Library Cache (Cursor Cache) ***
+
+** get plan de la requete dans Library Cache (Cursor Cache) ***
+
+** creation SQL PLAN BASELINE a partir de la Library cache (Cursor Cache) ***
+
+** Show SQL Baseline from SQL Plan Name ********
+
+** Display Plan from SQL Baseline ******
+
+** execution requete ***
+=> que remarquez-vous ?
+
+
+** Execution ****
+SELECT /*+ INDEX(ind_tx_n1) */ count(*) FROM OLAP.tx WHERE n > 0;
+
+** find de la requete dans Library Cache (Cursor Cache) ***
+
+** get plan de la requete dans Library Cache (Cursor Cache) ***
+
+** Adding SQL Plan à la SQL Baseline 
+
+** Show SQL Baseline avec SQL Handle
+=> Combien de SQL Plan
+=> Qu'observez-vous ?
+
+** Execution : SELECT /*+ INDEX(ind_tx_n1) */ count(*) FROM OLAP.tx WHERE n > 0;  ****
+
+
+** disable SQL PLAN premier ********
+
+
+** creation ajout à SQL Baseline du SQL Plan ****
+
+** observation / Enable Plan ***

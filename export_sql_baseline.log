@@ -1,0 +1,15 @@
+Creation of staging table for loading SQL Plan from Baseline, table name : TEMPX                                                                                
+Loading SQL Plan : SQLID_g1dvy0pkjmq52_2294200063 into staging table : TEMPX                                                                                    
+Exporting table  : TEMPX                                                                                                                                        
+create job                                                                                                                                                      
+METADATA_FILTER SCHEMA_LIST                                                                                                                                     
+METADATA_FILTER TABLE NAME                                                                                                                                      
+add_file for dump file: exp_base1                                                                                                                               
+add_file log file: perftool_exp.log                                                                                                                             
+Starting job                                                                                                                                                    
+Waiting for end of job                                                                                                                                          
+Export job done - status : COMPLETED                                                                                                                            
+Check log file, perftool_exp.log,  in location : D:\oracle\product\19.3\dbhome19.3\rdbms\log\                                                                   
+Take dump file: exp_base1 from location : D:\oracle\product\19.3\dbhome19.3\rdbms\log\                                                                          
+Cleaning of staging table                                                                                                                                       
+END OF :  EXPORT SQL BASELINE (SINGLE PLAN)                                                                                                                     

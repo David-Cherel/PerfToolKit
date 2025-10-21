@@ -1,0 +1,131 @@
+
+Session altered.
+
+
+Session altered.
+
+
+TABLE_NAME                                                                                                                                                      
+--------------------------------------------------------------------------------------------------------------------------------                                
+WC_PERSON_SCD_CQ2806                                                                                                                                            
+WC_PERSON_D_BCK                                                                                                                                                 
+WC_PERSON_DUMP                                                                                                                                                  
+WC_PERSON_SEGM_HIST_PARTITION                                                                                                                                   
+WC_PERSON_SEGM_HIST_CQ2806                                                                                                                                      
+WC_PERSON_D_EXT                                                                                                                                                 
+WC_PERSON_INSEE_ME_SCD                                                                                                                                          
+WC_PERSON_SEGM_HDR_FS                                                                                                                                           
+WC_PERSON_SEGM_A                                                                                                                                                
+WC_PERSON_SEGM_IMG                                                                                                                                              
+WC_PERSON_SEGM_AVNT_FS                                                                                                                                          
+WC_PERSON_D_23092010                                                                                                                                            
+WC_PERSON_D_CQ14403                                                                                                                                             
+WC_PERSON_SCD_BCK                                                                                                                                               
+WC_PERSON_D_SAMP10                                                                                                                                              
+WC_PERSON_CAT_MD                                                                                                                                                
+WC_PERSON_DSX                                                                                                                                                   
+WC_PERSON_SEGM_HIST_BKUP0610                                                                                                                                    
+WC_PERSON_DX1                                                                                                                                                   
+WC_PERSON_CAT_ME_SCD                                                                                                                                            
+WC_PERSON_D                                                                                                                                                     
+WC_PERSON_DX                                                                                                                                                    
+WC_PERSON_SCD                                                                                                                                                   
+WC_PERSON_SEGM_PRLOAD                                                                                                                                           
+WC_PERSON_D                                                                                                                                                     
+WC_PERSON_SEGM_HIST                                                                                                                                             
+WC_PERSON_SCD_V2                                                                                                                                                
+WC_PERSON_SEGM_HIST_CQ3418                                                                                                                                      
+WC_PERSON_SEGM_HIST_CQ3418_BKP                                                                                                                                  
+WC_PERSON_SCD_PARTITN                                                                                                                                           
+WC_PERSON_D_3219                                                                                                                                                
+WC_PERSON_SEGM_COURSESU                                                                                                                                         
+WC_PERSON_SEGM_HIST_BCK                                                                                                                                         
+WC_PERSON_SEGM_HIST_1                                                                                                                                           
+WC_PERSON_SEGM_HIST_TESTPERF                                                                                                                                    
+WC_PERSON_SEGM_HIST_INT                                                                                                                                         
+WC_PERSON_SEGM_TEMP                                                                                                                                             
+
+37 rows selected.
+
+
+PLAN_TABLE_OUTPUT                                                                                                                                               
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID  64a2trwmub3gb, child number 0                                                                                                                           
+-------------------------------------                                                                                                                           
+select table_name from dba_tables where table_name like 'WC_PERSON%'                                                                                            
+                                                                                                                                                                
+Plan hash value: 135259824                                                                                                                                      
+                                                                                                                                                                
+---------------------------------------------------------------------------------------------------------------------------------------------------------       
+| Id  | Operation                             | Name              | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  |  OMem |  1Mem |  O/1/M   |       
+---------------------------------------------------------------------------------------------------------------------------------------------------------       
+|   0 | SELECT STATEMENT                      |                   |      1 |        |     37 |00:00:13.63 |   26069 |   5983 |       |       |          |       
+|*  1 |  FILTER                               |                   |      1 |        |     37 |00:00:13.63 |   26069 |   5983 |       |       |          |       
+|*  2 |   HASH JOIN                           |                   |      1 |   6408 |     37 |00:00:13.63 |   26069 |   5983 |  2060K|  2060K|     1/0/0|       
+|   3 |    FIXED TABLE FULL                   | X$KSPPCV          |      1 |   5397 |   5397 |00:00:00.01 |       0 |      0 |       |       |          |       
+|   4 |    MERGE JOIN CARTESIAN               |                   |      1 |   6408 |     37 |00:00:13.62 |   26069 |   5983 |       |       |          |       
+|*  5 |     HASH JOIN RIGHT OUTER             |                   |      1 |   6408 |     37 |00:00:13.62 |   26069 |   5983 |  2060K|  2060K|     1/0/0|       
+|   6 |      INDEX FULL SCAN                  | I_USER2           |      1 |    121 |    121 |00:00:00.01 |       1 |      0 |       |       |          |       
+|*  7 |      HASH JOIN OUTER                  |                   |      1 |   6408 |     37 |00:00:13.62 |   26068 |   5983 |   879K|   879K|     1/0/0|       
+|   8 |       NESTED LOOPS OUTER              |                   |      1 |   6395 |     37 |00:00:02.04 |   20212 |    283 |       |       |          |       
+|   9 |        NESTED LOOPS OUTER             |                   |      1 |   6395 |     37 |00:00:02.04 |   20212 |    283 |       |       |          |       
+|* 10 |         HASH JOIN                     |                   |      1 |   6223 |     37 |00:00:02.03 |   20108 |    283 |  1416K|  1416K|     1/0/0|       
+|  11 |          INDEX FULL SCAN              | I_USER2           |      1 |    121 |    121 |00:00:00.01 |       1 |      0 |       |       |          |       
+|* 12 |          HASH JOIN                    |                   |      1 |   6223 |     37 |00:00:02.03 |   20107 |    283 |  2060K|  2060K|     1/0/0|       
+|  13 |           INDEX FULL SCAN             | I_USER2           |      1 |    121 |    121 |00:00:00.01 |       1 |      0 |       |       |          |       
+|  14 |           NESTED LOOPS                |                   |      1 |   6223 |     37 |00:00:02.03 |   20106 |    283 |       |       |          |       
+|  15 |            NESTED LOOPS               |                   |      1 |   6223 |   6214 |00:00:01.26 |   19836 |    147 |       |       |          |       
+|  16 |             NESTED LOOPS OUTER        |                   |      1 |   6214 |   6214 |00:00:00.15 |   19029 |     12 |       |       |          |       
+|* 17 |              HASH JOIN                |                   |      1 |   6214 |   6214 |00:00:00.14 |   19028 |     12 |  2329K|  2329K|     1/0/0|       
+|  18 |               TABLE ACCESS CLUSTER    | TS$               |      1 |     16 |     16 |00:00:00.01 |      17 |      0 |       |       |          |       
+|  19 |                INDEX FULL SCAN        | I_TS#             |      1 |      1 |     16 |00:00:00.01 |       1 |      0 |       |       |          |       
+|* 20 |               TABLE ACCESS CLUSTER    | TAB$              |      1 |   6214 |   6214 |00:00:00.13 |   19011 |     12 |       |       |          |       
+|  21 |                INDEX FULL SCAN        | I_OBJ#            |      1 |      1 |  15816 |00:00:00.06 |      25 |     12 |       |       |          |       
+|* 22 |              INDEX RANGE SCAN         | I_IMSVC1          |   6214 |      1 |      0 |00:00:00.01 |       1 |      0 |       |       |          |       
+|* 23 |             INDEX RANGE SCAN          | I_OBJ1            |   6214 |      1 |   6214 |00:00:01.11 |     807 |    135 |       |       |          |       
+|* 24 |            TABLE ACCESS BY INDEX ROWID| OBJ$              |   6214 |      1 |     37 |00:00:00.77 |     270 |    136 |       |       |          |       
+|  25 |         TABLE ACCESS CLUSTER          | SEG$              |     37 |      1 |     30 |00:00:00.01 |     104 |      0 |       |       |          |       
+|* 26 |          INDEX UNIQUE SCAN            | I_FILE#_BLOCK#    |     37 |      1 |     30 |00:00:00.01 |      74 |      0 |       |       |          |       
+|* 27 |        INDEX RANGE SCAN               | I_OBJ1            |     37 |      1 |      0 |00:00:00.01 |       0 |      0 |       |       |          |       
+|  28 |       INDEX FULL SCAN                 | I_OBJ1            |      1 |   2094K|   2094K|00:00:10.86 |    5856 |   5700 |       |       |          |       
+|  29 |     BUFFER SORT                       |                   |     37 |      1 |     37 |00:00:00.01 |       0 |      0 |  2048 |  2048 |     1/0/0|       
+|* 30 |      FIXED TABLE FIXED INDEX          | X$KSPPI (ind:1)   |      1 |      1 |      1 |00:00:00.01 |       0 |      0 |       |       |          |       
+|* 31 |   TABLE ACCESS BY INDEX ROWID BATCHED | USER_EDITIONING$  |      0 |      1 |      0 |00:00:00.01 |       0 |      0 |       |       |          |       
+|* 32 |    INDEX RANGE SCAN                   | I_USER_EDITIONING |      0 |      2 |      0 |00:00:00.01 |       0 |      0 |       |       |          |       
+|* 33 |   TABLE ACCESS BY INDEX ROWID BATCHED | USER_EDITIONING$  |      0 |      1 |      0 |00:00:00.01 |       0 |      0 |       |       |          |       
+|* 34 |    INDEX RANGE SCAN                   | I_USER_EDITIONING |      0 |      2 |      0 |00:00:00.01 |       0 |      0 |       |       |          |       
+|  35 |   NESTED LOOPS SEMI                   |                   |      0 |      1 |      0 |00:00:00.01 |       0 |      0 |       |       |          |       
+|* 36 |    INDEX SKIP SCAN                    | I_USER2           |      0 |      1 |      0 |00:00:00.01 |       0 |      0 |       |       |          |       
+|* 37 |    INDEX RANGE SCAN                   | I_OBJ4            |      0 |      1 |      0 |00:00:00.01 |       0 |      0 |       |       |          |       
+---------------------------------------------------------------------------------------------------------------------------------------------------------       
+                                                                                                                                                                
+Predicate Information (identified by operation id):                                                                                                             
+---------------------------------------------------                                                                                                             
+                                                                                                                                                                
+   1 - filter((BITAND("U"."SPARE1",16)=0 OR BITAND("O"."FLAGS",1048576)=1048576 OR ("O"."TYPE#"<>88 AND  IS NULL) OR ( IS NOT NULL AND                          
+              ((SYS_CONTEXT('userenv','current_edition_name')='ORA$BASE' AND "U"."TYPE#"<>2) OR ("U"."TYPE#"=2 AND                                              
+              "U"."SPARE2"=TO_NUMBER(SYS_CONTEXT('userenv','current_edition_id'))) OR  IS NOT NULL))))                                                          
+   2 - access("KSPPI"."INDX"="KSPPCV"."INDX")                                                                                                                   
+   5 - access("CX"."OWNER#"="CU"."USER#")                                                                                                                       
+   7 - access("T"."DATAOBJ#"="CX"."OBJ#")                                                                                                                       
+  10 - access("O"."OWNER#"="U"."USER#")                                                                                                                         
+  12 - access("O"."SPARE3"="U"."USER#")                                                                                                                         
+  17 - access("T"."TS#"="TS"."TS#")                                                                                                                             
+  20 - filter((BITAND("T"."PROPERTY",1)=0 AND BITAND("T"."PROPERTY",36893488147419103232)=0))                                                                   
+  22 - access("T"."OBJ#"="SVC"."OBJ#" AND "SVC"."SUBPART#" IS NULL)                                                                                             
+  23 - access("O"."OBJ#"="T"."OBJ#")                                                                                                                            
+  24 - filter(("O"."NAME" LIKE 'WC_PERSON%' AND BITAND("O"."FLAGS",128)=0))                                                                                     
+  26 - access("T"."TS#"="S"."TS#" AND "T"."FILE#"="S"."FILE#" AND "T"."BLOCK#"="S"."BLOCK#")                                                                    
+  27 - access("T"."BOBJ#"="CO"."OBJ#")                                                                                                                          
+  30 - filter("KSPPI"."KSPPINM"='_dml_monitoring_enabled')                                                                                                      
+  31 - filter("TYPE#"=:B1)                                                                                                                                      
+  32 - access("UE"."USER#"=:B1)                                                                                                                                 
+  33 - filter("UE"."TYPE#"=:B1)                                                                                                                                 
+  34 - access("UE"."USER#"=:B1)                                                                                                                                 
+  36 - access("U2"."TYPE#"=2 AND "U2"."SPARE2"=TO_NUMBER(SYS_CONTEXT('userenv','current_edition_id')))                                                          
+       filter(("U2"."TYPE#"=2 AND "U2"."SPARE2"=TO_NUMBER(SYS_CONTEXT('userenv','current_edition_id'))))                                                        
+  37 - access("O2"."DATAOBJ#"=:B1 AND "O2"."TYPE#"=88 AND "O2"."OWNER#"="U2"."USER#")                                                                           
+                                                                                                                                                                
+
+76 rows selected.
+

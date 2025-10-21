@@ -1,0 +1,17 @@
+Start of Import procedure from dump : EXP_BASE1.DMP                                                                                                             
+Create IMPORT job                                                                                                                                               
+METADATA_FILTER SCHEMA_LIST                                                                                                                                     
+METADATA_FILTER TABLE EXCLUDE_PATH_EXPR STATISTICS                                                                                                              
+set_parameter : TABLE_EXISTS_ACTION / REPLACE                                                                                                                   
+add_file for dump file: EXP_BASE1.DMP                                                                                                                           
+add_file for log file: perftool_exp.log                                                                                                                         
+Starting import job                                                                                                                                             
+Waiting for end of job                                                                                                                                          
+Import Job finished                                                                                                                                             
+Check log file, perftool_exp.log,  in location : D:\oracle\product\19.3\dbhome19.3\rdbms\log\                                                                   
+Looking for the imported staging table containing SQL Baseline ...                                                                                              
+Table found : TEMPX                                                                                                                                             
+Uploading in SPM ALL SQL Plans from Staging table : TEMPX                                                                                                       
+Uploading done                                                                                                                                                  
+Cleaning of staging table                                                                                                                                       
+END OF :  IMPORT SQL BASELINE ALL PLANS FROM DUMP                                                                                                               
