@@ -24,6 +24,16 @@ define sql_set_name = '&1'
 define snapid_begin = '&2'
 define snapid_end = '&3'
 
+-- Get the minimum snapshot ID if snapid_begin is not provided
+COLUMN min_snap_id NEW_VALUE min_snap_id
+SELECT MIN(snap_id) AS min_snap_id
+FROM dba_hist_snapshot;
+
+-- Check if snapid_begin is null and set it to min_snap_id if so
+COLUMN adjusted_snapid_begin NEW_VALUE adjusted_snapid_begin
+SELECT NVL('&snapid_begin', '&min_snap_id') AS adjusted_snapid_begin
+FROM dual;
+
 declare
 
 
@@ -32,15 +42,33 @@ cnt_plans number;
 
 begin
 
+select CON_DBID into MYDBID from v$database;
+dbms_output.put_line('MYDBID : '||MYDBID);
+select min(snap_id), max(snap_id) into min_snap_id, max_snap_id from dba_hist_snapshot where DBID=MYDBID;
+dbms_output.put_line('min_snap_id : '||min_snap_id);
+dbms_output.put_line('max_snap_id : '||max_snap_id);
+
+-- Check if snapid_begin is null and set it to min_snap_id if so
+IF '&snapid_begin' IS NULL THEN
+    adjusted_snapid_begin := min_snap_id;
+ELSE
+    adjusted_snapid_begin := &snapid_begin;
+END IF;
+
+-- Check if snapid_end is null and set it to max_snap_id if so
+IF '&snapid_end' IS NULL THEN
+    adjusted_snapid_end := max_snap_id;
+ELSE
+    adjusted_snapid_end := &snapid_end;
+END IF;
 
 
-
-DBMS_SQLSET.CREATE_SQLSET (sqlset_name=>'&&sql_set_name',description=>'all plans snapid &&snapid_begin to &&snapid_end');
+DBMS_SQLSET.CREATE_SQLSET (sqlset_name=>'&&sql_set_name',description=>'all plans snapid '||adjusted_snapid_begin||' to '||adjusted_snapid_end);
 
 open cur for
   select value(p) from table(dbms_sqltune.select_workload_repository(
-       begin_snap       => &&snapid_begin,
-       end_snap         => &&snapid_end,
+       begin_snap       => adjusted_snapid_begin,
+       end_snap         => adjusted_snapid_end,
        basic_filter     => 'parsing_schema_name not in (''SYS'',''ORACLE_OCM'',''ORDSYS'')',
        ranking_measure1 => NULL,
        result_limit     => NULL,
