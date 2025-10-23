@@ -13,5 +13,5 @@ dba_sql_plan_baselines spb, sqlobj$ so
 where spb.signature = so.signature
 and spb.plan_name = so.name;
 
-exit;
+
 
