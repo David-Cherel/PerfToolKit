@@ -42,7 +42,7 @@ DBMS_SQLSET.CREATE_SQLSET (sqlset_name=>'&&sql_set_name',description=>'all plans
 
 open cur for
   select value(p) from table(DBMS_SQLTUNE.select_cursor_cache(
-                    basic_filter      => 'parsing_schema_name not in (''SYS'',''ORACLE_OCM'',''ORDSYS'')',
+                    basic_filter      => 'parsing_schema_name not in (''DVSYS'',''SYS'',''ORACLE_OCM'',''ORDSYS'')',
 					object_filter     => NULL,
                     ranking_measure1 => NULL, 
 					ranking_measure2 => NULL, 

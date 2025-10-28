@@ -68,7 +68,7 @@ open cur for
   select value(p) from table(dbms_sqltune.select_workload_repository(
        begin_snap       => adjusted_snapid_begin,
        end_snap         => adjusted_snapid_end,
-       basic_filter     => 'parsing_schema_name not in (''SYS'',''ORACLE_OCM'',''ORDSYS'')',
+       basic_filter     => 'parsing_schema_name not in (''DVSYS'',''SYS'',''ORACLE_OCM'',''ORDSYS'')',
        ranking_measure1 => NULL,
        result_limit     => NULL,
        DBID             => MYDBID,
