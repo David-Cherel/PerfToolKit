@@ -24,15 +24,6 @@ define sql_set_name = '&1'
 define snapid_begin = '&2'
 define snapid_end = '&3'
 
--- Get the minimum snapshot ID if snapid_begin is not provided
-COLUMN min_snap_id NEW_VALUE min_snap_id
-SELECT MIN(snap_id) AS min_snap_id
-FROM dba_hist_snapshot;
-
--- Check if snapid_begin is null and set it to min_snap_id if so
-COLUMN adjusted_snapid_begin NEW_VALUE adjusted_snapid_begin
-SELECT NVL('&snapid_begin', '&min_snap_id') AS adjusted_snapid_begin
-FROM dual;
 
 declare
 
@@ -72,6 +63,7 @@ open cur for
        basic_filter     => 'parsing_schema_name not in (''SYS'',''ORACLE_OCM'',''ORDSYS'')',
        ranking_measure1 => NULL,
        result_limit     => NULL,
+       DBID             => MYDBID,
        attribute_list   => 'ALL')) p;
 
   dbms_sqltune.load_sqlset('&&sql_set_name', cur);

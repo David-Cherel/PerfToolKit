@@ -54,7 +54,7 @@ l_file_name := '&&5';
 
 	
 dbms_output.put_line('Creation of staging table for loading SQL set, table name : '||l_table_name);
-DBMS_SQLSET.CREATE_STGTAB(table_name => l_table_name,table_owner => l_table_owner,tablespace_name => l_tablespace);
+DBMS_SQLSET.CREATE_STGTAB(table_name => l_table_name,schema_name => l_table_owner,tablespace_name => l_tablespace);
 
 dbms_output.put_line('Copying SQL set : '||l_sql_set_name||' into staging table : '||l_table_name);
 DBMS_SQLSET.PACK_STGTAB(sqlset_name=>l_sql_set_name, staging_table_name => l_table_name,staging_schema_owner => l_table_owner);

@@ -1,0 +1,65 @@
+-- ##################################################################
+-- creation SQL Patch from cursor cache SQL_ID=4v85jky6r6hzt
+-- ##################################################################
+
+
+
+--
+--
+-- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+-- Example : create_sql_patch.sql 
+-- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+set feedback off
+set sqlblanklines on
+set serveroutput on
+set verify off
+spool create_sql_patch.log
+declare
+
+
+
+
+ret varchar2(40);
+l_sql_id varchar2(13);
+l_name varchar2(40);
+l_hint1 varchar2(4000);
+l_hint2 varchar2(4000);
+l_hint3 varchar2(4000);
+l_hint4 varchar2(4000);
+
+begin
+
+
+l_sql_id := '4v85jky6r6hzt';
+l_hint1 := 'ALL_ROWS OUTLINE_LEAF(@"SEL$FF033390") MERGE(@"SEL$18780C30" >"SEL$4") OUTLINE(@"SEL$4") OUTLINE(@"SEL$18780C30") MERGE(@"SEL$1" >"SEL$3") MERGE(@"SEL$2" >"SEL$3") OUTLINE(@"SEL$3") OUTLINE(@"SEL$1") OUTLINE(@"SEL$2") INDEX_RS_ASC(@"SEL$FF033390" "A"@"SEL$4" ("ZY3B"."NUDOSS"         "ZY3B"."NULIGN"))'; 
+l_hint2 := ' BATCH_TABLE_ACCESS_BY_ROWID(@"SEL$FF033390" "A"@"SEL$4") INDEX_RS_ASC(@"SEL$FF033390" "B"@"SEL$1" ("ZE00"."IDOU00")) BATCH_TABLE_ACCESS_BY_ROWID(@"SEL$FF033390" "B"@"SEL$1") INDEX_RS_ASC(@"SEL$FF033390" "B"@"SEL$2" ("ZE00"."IDOU00")) BATCH_TABLE_ACCESS_BY_ROWID(@"SEL$FF033390" "B"@"SEL$2")'; 
+l_hint3 := ' INDEX_RS_ASC(@"SEL$FF033390" "D"@"SEL$2" ("ZEVD"."NUDOSS"         "ZEVD"."NULIGN")) BATCH_TABLE_ACCESS_BY_ROWID(@"SEL$FF033390" "D"@"SEL$2") INDEX_RS_ASC(@"SEL$FF033390" "C"@"SEL$1" ("ZE0F"."NUDOSS"         "ZE0F"."TXADR0" "ZE0F"."DTBG00")) BATCH_TABLE_ACCESS_BY_ROWID(@"SEL$FF033390" "C"@"SEL$1")'; 
+l_hint4 := ' LEADING(@"SEL$FF033390" "A"@"SEL$4" "B"@"SEL$1" "B"@"SEL$2" "D"@"SEL$2"         "C"@"SEL$1") USE_NL(@"SEL$FF033390" "B"@"SEL$1") USE_NL(@"SEL$FF033390" "B"@"SEL$2") USE_NL(@"SEL$FF033390" "D"@"SEL$2") USE_NL(@"SEL$FF033390" "C"@"SEL$1")';
+
+l_name := 'SQLPatch_1373963316';
+
+dbms_output.put_line('SQL Patch creation ');
+
+ret:= SYS.dbms_sqldiag.create_sql_patch(
+    sql_id    => l_sql_id,
+    hint_text => to_clob(l_hint1||l_hint2||l_hint3||l_hint4),
+    name      => l_name);
+
+
+dbms_output.put_line('Return code : '||ret);
+dbms_output.put_line(' ');
+dbms_output.put_line('SQL Patch : '||l_name||' created.');
+dbms_output.put_line(' ');
+ 
+end;
+/
+
+spool off
+
+
+
+
+
+
