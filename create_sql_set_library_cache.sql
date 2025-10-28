@@ -9,7 +9,7 @@
 --
 --
 -- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : create_sql_set_library_cache.sql my_sal_set 25698 25950
+-- Example : create_sql_set_library_cache.sql my_sal_set 
 -- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
@@ -28,8 +28,13 @@ declare
 cur DBMS_SQLSET.SQLSET_CURSOR;
 cnt_plans number;
 
+
 begin
 
+
+dbms_output.put_line('#########################################################################################');
+dbms_output.put_line('SQL Set from Library Cache,  attribute_list=> ALL, percent=100% , HAS_RECURSIVE_SQL ');
+dbms_output.put_line('#########################################################################################');
 
 
 
@@ -67,7 +72,5 @@ END;
 
 undef cur
 undef sql_set_name
-undef snapid_begin
-undef snapid_end
 
 exit;

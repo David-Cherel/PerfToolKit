@@ -30,14 +30,22 @@ declare
 
 cur DBMS_SQLSET.SQLSET_CURSOR;
 cnt_plans number;
+MYDBID number;
+min_snap_id number;
+max_snap_id number;
+adjusted_snapid_begin number;
+adjusted_snapid_end number;
 
 begin
 
 select CON_DBID into MYDBID from v$database;
+dbms_output.put_line('#########################################################################################');
 dbms_output.put_line('MYDBID : '||MYDBID);
 select min(snap_id), max(snap_id) into min_snap_id, max_snap_id from dba_hist_snapshot where DBID=MYDBID;
 dbms_output.put_line('min_snap_id : '||min_snap_id);
 dbms_output.put_line('max_snap_id : '||max_snap_id);
+dbms_output.put_line('#########################################################################################');
+
 
 -- Check if snapid_begin is null and set it to min_snap_id if so
 IF '&snapid_begin' IS NULL THEN
