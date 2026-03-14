@@ -6,7 +6,7 @@
 ## Mainly based on SQL scripts written by Kerry Osborne (http://kerryosborne.oracle-guy.com/)
 ## some subs coming from Bertrand Drouvot (https://bdrouvot.wordpress.com/)
 ## plus new stuff from me 
-## Date	  : 15/010/2025
+## Date	  : 15/10/2025
 ######################################################
 
 our $perl_script_version='1.9';
@@ -36,6 +36,7 @@ BEGIN {
 use feature qw( say );
 use feature qw( switch );
 no warnings qw( experimental::smartmatch );
+use warnings;
 
 use DBI;
 use DBD::Oracle qw(:ora_session_modes);
@@ -53,6 +54,13 @@ our $rac=0;
 our $inst_type='RDBMS';
 our $dbh;
 our $sql1;
+our $choice;
+our $response;
+our $ORACLE_HOME;
+our $ORACLE_SID;
+our $datestring;
+our $logfile_name;
+our $LOG_DIR;
 
 
 #Import of variables from PerfToolKit_parameters.conf
@@ -154,67 +162,45 @@ sub push_spool_in_mem {
 
 }
 
-sub exec_sql {
-	my ($connect,$sql_file) = @_;
+sub exec_sql_with_params {
+	my ($connect, $sql_file, @params) = @_;
 	say "INFO :execution du sqlplus $sql_file";
-	#say "sqlplus -S $connect \@$sql_file";
-	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file `;
-	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
-	#my $result = qx{ type $sql_file };
+	my $args = join q{ }, grep { defined $_ && $_ ne q{} } @params;
+	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $args`;
 	return $result;
+}
+
+sub exec_sql {
+	my ($connect, $sql_file) = @_;
+	return exec_sql_with_params($connect, $sql_file);
 }
 
 sub exec_sql_one_param {
 	my ($connect,$sql_file,$p1) = @_;
-	say "INFO :execution du sqlplus $sql_file";
-	#say "sqlplus -S $connect \@$sql_file";
-	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 `;
-	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
-	#my $result = qx{ type $sql_file };
-	return $result;
+	return exec_sql_with_params($connect,$sql_file,$p1);
 }
 
 sub exec_sql_two_param {
 	my ($connect,$sql_file,$p1,$p2) = @_;
-	say "INFO :execution du sqlplus $sql_file";
-	#say "sqlplus -S $connect \@$sql_file";
-	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 $p2 `;
-	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
-	#my $result = qx{ type $sql_file };
-	return $result;
+	return exec_sql_with_params($connect,$sql_file,$p1,$p2);
 }
 
 sub exec_sql_three_param {
 	my ($connect,$sql_file,$p1,$p2,$p3) = @_;
-	say "INFO :execution du sqlplus $sql_file";
-	#say "sqlplus -S $connect \@$sql_file";
-	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 $p2 $p3`;
-	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
-	#my $result = qx{ type $sql_file };
-	return $result;
+	return exec_sql_with_params($connect,$sql_file,$p1,$p2,$p3);
 }
 
 sub exec_sql_four_param {
 	my ($connect,$sql_file,$p1,$p2,$p3,$p4) = @_;
-	say "INFO :execution du sqlplus $sql_file";
-	#say "sqlplus -S $connect \@$sql_file";
-	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 $p2 $p3 $p4`;
-	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
-	#my $result = qx{ type $sql_file };
-	return $result;
+	return exec_sql_with_params($connect,$sql_file,$p1,$p2,$p3,$p4);
 }
 
 sub exec_sql_five_param {
 	my ($connect,$sql_file,$p1,$p2,$p3,$p4,$p5) = @_;
-	say "INFO :execution du sqlplus $sql_file";
-	#say "sqlplus -S $connect \@$sql_file";
-	my $result = `$ORACLE_HOME/bin/sqlplus -L $connect \@$sql_file $p1 $p2 $p3 $p4 $p5`;
-	#my $result = qx{ $ORACLE_HOME/bin/sqlplus -S $connect \@$sql_file };
-	#my $result = qx{ type $sql_file };
-	return $result;
+	return exec_sql_with_params($connect,$sql_file,$p1,$p2,$p3,$p4,$p5);
 }
 
-sub print_menu {
+sub print_menu_legacy_unused {
 	say "MENU : Action list";
 }
 
@@ -1924,7 +1910,7 @@ sub close_connection {
 		say 'INFO : End of Performance Tool Kit';
 		say 'INFO : I hope you have enjoyed it !';
 		say_time();
-		$dbh->disconnect();
+		$dbh->disconnect() if defined $dbh;
         exit 0;
 }
 
@@ -2110,7 +2096,7 @@ say 'INFO : I hope you have enjoyed it !';
 say_time();
 
 
-$dbh->disconnect();
+$dbh->disconnect() if defined $dbh;
 
 
 
