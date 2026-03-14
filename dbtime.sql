@@ -24,8 +24,16 @@
 
 set serveroutput on
 set sqlblanklines on
-set feedback off
-set lines 155
+set feedback on
+set pages 9999
+set lines 180
+set verify off
+set trimspool on
+set tab off
+set termout on
+
+whenever sqlerror exit failure rollback
+
 col dbtime for 999,999.99
 col begin_timestamp for a40
 
@@ -35,6 +43,24 @@ spool dbtime.log
 define instance_num = '&1'
 define min_input = '&2'
 define max_input = '&3'
+
+begin
+  if '&&instance_num' is not null and not regexp_like('&&instance_num','^[0-9]+$') then
+    raise_application_error(-20011, 'INSTANCE_NUMBER must be numeric or blank.');
+  end if;
+  if '&&min_input' is not null and not regexp_like('&&min_input','^[0-9]+$') then
+    raise_application_error(-20012, 'BEGIN_SNAP_ID must be numeric or blank.');
+  end if;
+  if '&&max_input' is not null and not regexp_like('&&max_input','^[0-9]+$') then
+    raise_application_error(-20013, 'END_SNAP_ID must be numeric or blank.');
+  end if;
+end;
+/
+
+prompt
+prompt =====================================================================================================
+prompt AWR DB Time busiest periods (instance=&&instance_num, begin_snap=&&min_input, end_snap=&&max_input)
+prompt =====================================================================================================
 
 
 declare
@@ -111,6 +137,9 @@ BEGIN
     CLOSE c_snap_stats;
 END;
 /
+
+prompt
+prompt NOTE: Output lists the top 10 intervals by DB Time (minutes).
 
 -- EXECUTE IMMEDIATE 
 -- q'[ select * from (

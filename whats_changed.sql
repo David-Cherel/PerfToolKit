@@ -48,19 +48,46 @@
 -- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
+set pages 9999
+set lines 180
+set verify off
+set trimspool on
+set tab off
+set feedback on
+set termout on
+
+whenever sqlerror exit failure rollback
 
 define days_ago ='&1'
 define min_stddev ='&2'
 define min_etime ='&3'
 
+begin
+  if '&&days_ago' is null or not regexp_like('&&days_ago', '^[0-9]+(\.[0-9]+)?$') then
+    raise_application_error(-20031, 'DAYS_AGO must be numeric (example: 7).');
+  end if;
+  if '&&min_stddev' is not null and not regexp_like('&&min_stddev', '^[0-9]+(\.[0-9]+)?$') then
+    raise_application_error(-20032, 'MIN_STDDEV must be numeric (example: 2).');
+  end if;
+  if '&&min_etime' is not null and not regexp_like('&&min_etime', '^[0-9]+(\.[0-9]+)?$') then
+    raise_application_error(-20033, 'MIN_ETIME must be numeric seconds (example: 0.1).');
+  end if;
+end;
+/
+
+prompt
+prompt =====================================================================================================
+prompt AWR before/after change analysis (days_ago=&&days_ago, min_stddev=&&min_stddev, min_etime=&&min_etime)
+prompt =====================================================================================================
+
 spool whats_changed.log
 
-set lines 155
 col execs for 999,999,999
 col before_etime for 999,990.99
 col after_etime for 999,990.99
 col before_avg_etime for 999,990.99 head AVG_ETIME_BEFORE
 col after_avg_etime for 999,990.99 head AVG_ETIME_AFTER
+col delta_pct for 999,990.99
 col min_etime for 999,990.99
 col max_etime for 999,990.99
 col avg_etime for 999,990.999
@@ -70,7 +97,9 @@ col begin_interval_time for a30
 col node for 99999
 break on plan_hash_value on startup_time skip 1
 select * from (
-select sql_id, execs, before_avg_etime, after_avg_etime, norm_stddev,
+select sql_id, execs, before_avg_etime, after_avg_etime,
+       case when before_avg_etime = 0 then null else ((after_avg_etime-before_avg_etime)/before_avg_etime)*100 end delta_pct,
+       norm_stddev,
        case when to_number(before_avg_etime) < to_number(after_avg_etime) then 'Slower' else 'Faster' end result
 -- select *
 from (
@@ -133,6 +162,9 @@ and max_etime > nvl(to_number('&min_etime'),.1)
 
 order by norm_stddev
 /
+
+prompt
+prompt NOTE: RESULT=Slower means average elapsed time increased after reference date.
 
 spool off
 

@@ -1,0 +1,172 @@
+-- #############################################################################################################
+-- Adaptive Cursor Sharing (ACS) diagnosis report (single-instance views only)
+-- Usage:
+--   @acs_diagnosis.sql <SQL_ID> [CHILD_NUMBER]
+-- #############################################################################################################
+
+set pages 9999
+set lines 240
+set long 1000000
+set longchunksize 32767
+set verify off
+set trimspool on
+set tab off
+set feedback on
+set termout on
+
+whenever sqlerror exit failure rollback
+
+define sql_id   = '&1'
+define child_no = '&2'
+
+begin
+  if '&&sql_id' is null then
+    raise_application_error(-20401, 'SQL_ID is mandatory. Usage: @acs_diagnosis.sql <SQL_ID> [CHILD_NUMBER]');
+  end if;
+  if not regexp_like('&&sql_id', '^[[:alnum:]]{13}$') then
+    raise_application_error(-20402, 'Invalid SQL_ID format: &&sql_id');
+  end if;
+  if '&&child_no' is not null and not regexp_like('&&child_no', '^[0-9]+$') then
+    raise_application_error(-20403, 'CHILD_NUMBER must be numeric when provided.');
+  end if;
+end;
+/
+
+spool acs_diagnosis.log
+
+prompt
+prompt =====================================================================================================
+prompt ACS diagnosis for SQL_ID=&&sql_id  CHILD_NUMBER=&&child_no
+prompt =====================================================================================================
+prompt NOTE: Read-only report. No data change is performed.
+
+prompt
+prompt --- 0) ACS-related hidden optimizer parameters ---
+
+column name             format a45
+column value            format a30
+column isdefault        format a10
+column issys_modifiable format a16
+
+select name,
+       value,
+       isdefault,
+       issys_modifiable
+from   v$parameter
+where  name in (
+         '_optim_peek_user_binds',
+         '_optimizer_adaptive_cursor_sharing',
+         '_optimizer_extended_cursor_sharing_rel'
+       )
+order by name;
+
+column last_active_time   format a19
+column avg_etime_s        format 999,999.99999
+column avg_cpu_s          format 999,999.99999
+column avg_lio            format 999,999,999.9
+column avg_pio            format 999,999,999.9
+column is_bind_sensitive  format a3
+column is_bind_aware      format a3
+column is_shareable       format a3
+
+prompt
+prompt --- 1) V$SQL overview: bind sensitivity / awareness per child cursor ---
+
+select child_number,
+       plan_hash_value,
+       is_bind_sensitive,
+       is_bind_aware,
+       is_shareable,
+       executions,
+       to_char(last_active_time,'yyyy-mm-dd hh24:mi:ss') last_active_time,
+       (elapsed_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_etime_s,
+       (cpu_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_cpu_s,
+       buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,
+       disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio
+from   v$sql
+where  sql_id = '&&sql_id'
+and   (nullif('&&child_no','') is null or child_number = to_number(nullif('&&child_no','')))
+order by child_number;
+
+prompt
+prompt --- 2) V$SQLAREA parent-level snapshot ---
+
+select sql_id,
+       plan_hash_value,
+       version_count,
+       loaded_versions,
+       open_versions,
+       users_opening,
+       executions,
+       parsing_schema_name,
+       module,
+       action
+from   v$sqlarea
+where  sql_id = '&&sql_id';
+
+prompt
+prompt --- 3) V$SQL_SHARED_CURSOR (child split reasons) ---
+
+select *
+from   v$sql_shared_cursor
+where  sql_id = '&&sql_id'
+and   (nullif('&&child_no','') is null or child_number = to_number(nullif('&&child_no','')))
+order by child_number;
+
+prompt
+prompt --- 4) V$SQL_BIND_CAPTURE (captured bind values/types) ---
+
+column name            format a30
+column datatype_string format a20
+column value_string    format a60
+column last_captured   format a19
+
+select child_number,
+       name,
+       position,
+       datatype_string,
+       value_string,
+       to_char(last_captured,'yyyy-mm-dd hh24:mi:ss') last_captured,
+       was_captured
+from   v$sql_bind_capture
+where  sql_id = '&&sql_id'
+and   (nullif('&&child_no','') is null or child_number = to_number(nullif('&&child_no','')))
+order by child_number, position;
+
+prompt
+prompt --- 5) V$SQL_CS_SELECTIVITY (ACS selectivity buckets) ---
+
+select *
+from   v$sql_cs_selectivity
+where  sql_id = '&&sql_id'
+and   (nullif('&&child_no','') is null or child_number = to_number(nullif('&&child_no','')))
+order by child_number;
+
+prompt
+prompt --- 6) V$SQL_CS_STATISTICS (ACS runtime statistics) ---
+
+select *
+from   v$sql_cs_statistics
+where  sql_id = '&&sql_id'
+and   (nullif('&&child_no','') is null or child_number = to_number(nullif('&&child_no','')))
+order by child_number;
+
+prompt
+prompt --- 7) V$SQL_CS_HISTOGRAM (ACS histogram buckets) ---
+
+select *
+from   v$sql_cs_histogram
+where  sql_id = '&&sql_id'
+and   (nullif('&&child_no','') is null or child_number = to_number(nullif('&&child_no','')))
+order by child_number;
+
+prompt
+prompt --- Action hints ---
+prompt 1) If IS_BIND_SENSITIVE=Y but IS_BIND_AWARE=N, ACS may need more executions.
+prompt 2) If many child cursors exist, check V$SQL_SHARED_CURSOR for BIND_MISMATCH/OPTIMIZER_MISMATCH.
+prompt 3) Correlate V$SQL_BIND_CAPTURE values with V$SQL_CS_* selectivity buckets.
+prompt 4) If bind skew is real, evaluate histogram strategy (prefer pending stats test first).
+
+spool off
+
+exit;

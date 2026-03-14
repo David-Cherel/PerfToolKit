@@ -19,25 +19,53 @@
 -- Example : unstable_plans.sql 2 0.1 
 -- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+set pages 9999
+set lines 180
+set verify off
+set trimspool on
+set tab off
+set feedback on
+set termout on
 
-spool unstable_plans.log
+whenever sqlerror exit failure rollback
 
 define min_stddev ='&1'
 define min_etime ='&2'
 
+begin
+  if '&&min_stddev' is not null and not regexp_like('&&min_stddev', '^[0-9]+(\.[0-9]+)?$') then
+    raise_application_error(-20021, 'MIN_STDDEV must be numeric (example: 2 or 2.5).');
+  end if;
+  if '&&min_etime' is not null and not regexp_like('&&min_etime', '^[0-9]+(\.[0-9]+)?$') then
+    raise_application_error(-20022, 'MIN_ETIME must be numeric seconds (example: 0.1).');
+  end if;
+end;
+/
 
-set lines 155
+prompt
+prompt =====================================================================================================
+prompt AWR unstable plans analysis (min_stddev=&&min_stddev, min_etime=&&min_etime)
+prompt =====================================================================================================
+
+spool unstable_plans.log
+
 col execs for 999,999,999
 col min_etime for 999,999.99
 col max_etime for 999,999.99
 col avg_etime for 999,999.999
 col avg_lio for 999,999,999.9
 col norm_stddev for 999,999.9999
+col etime_spread_pct for 999,990.99
 col begin_interval_time for a30
 col node for 99999
 break on plan_hash_value on startup_time skip 1
 select * from (
-select sql_id, sum(execs), min(avg_etime) min_etime, max(avg_etime) max_etime, stddev_etime/min(avg_etime) norm_stddev
+select sql_id,
+       sum(execs) execs,
+       min(avg_etime) min_etime,
+       max(avg_etime) max_etime,
+       stddev_etime/min(avg_etime) norm_stddev,
+       case when min(avg_etime)=0 then null else ((max(avg_etime)-min(avg_etime))/min(avg_etime))*100 end etime_spread_pct
 from (
 select sql_id, plan_hash_value, execs, avg_etime,
 stddev(avg_etime) over (partition by sql_id) stddev_etime 
@@ -59,8 +87,11 @@ group by sql_id, stddev_etime
 )
 where norm_stddev > nvl(to_number('&min_stddev'),2)
 and max_etime > nvl(to_number('&min_etime'),1/10)
-order by norm_stddev
+order by norm_stddev desc
 /
+
+prompt
+prompt NOTE: Higher NORM_STDDEV and ETIME_SPREAD_PCT indicate stronger instability.
 
 spool off
 

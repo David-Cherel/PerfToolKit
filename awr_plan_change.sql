@@ -10,27 +10,50 @@
 -- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
+set pages 9999
+set lines 220
+set verify off
+set trimspool on
+set tab off
+set feedback on
+set termout on
 
-set lines 180
+whenever sqlerror exit failure rollback
+
+define sql_id ='&1'
+
+begin
+  if '&&sql_id' is null then
+    raise_application_error(-20001, 'Parameter SQL_ID is mandatory. Usage: @awr_plan_change.sql <SQL_ID>');
+  end if;
+  if not regexp_like('&&sql_id', '^[[:alnum:]]{13}$') then
+    raise_application_error(-20002, 'Invalid SQL_ID format: &&sql_id');
+  end if;
+end;
+/
 
 col execs for 999,999,999
 col avg_etime for 999,999.99999
 col avg_lio for 999,999,999.9
 col avg_pio for 999,999,999.9
 col avg_cpu_time for 999,999.99999
-col begin_interval_time for a30
+col begin_interval_time for a22
 col node for 99999
+col snap_count for 999999
+col first_seen for a22
+col last_seen for a22
+col min_avg_etime for 999,999.99999
+col max_avg_etime for 999,999.99999
+col etime_spread_pct for 999,990.99
 
 spool awr_plan_change.log
-
-define sql_id ='&1'
 
 
 PROMPT ******************************************************************
 PROMPT Search for various Exec Plan with the SQL_ID provided
 PROMPT ******************************************************************
 
-break on plan_hash_value on startup_time skip 1
+break on sql_id on plan_hash_value skip 1
 /* PTK */ select ss.snap_id, ss.instance_number node, begin_interval_time, sql_id, plan_hash_value,
 nvl(executions_delta,0) execs,
 (elapsed_time_delta/decode(nvl(executions_delta,0),0,1,executions_delta))/1000000 avg_etime,
@@ -44,6 +67,36 @@ and ss.DBID = S.DBID
 and S.CON_DBID=DB.CON_DBID
 and ss.instance_number = S.instance_number
 order by 1, 2, 3;
+
+PROMPT ******************************************************************
+PROMPT Summary by PLAN_HASH_VALUE
+PROMPT ******************************************************************
+
+with base as (
+  select s.plan_hash_value,
+         ss.begin_interval_time,
+         nvl(s.executions_delta,0) execs,
+         (s.elapsed_time_delta/decode(nvl(s.executions_delta,0),0,1,s.executions_delta))/1000000 avg_etime
+  from cdb_hist_sqlstat s
+       join cdb_hist_snapshot ss
+         on ss.snap_id = s.snap_id
+        and ss.dbid = s.dbid
+        and ss.instance_number = s.instance_number
+       join v$database db
+         on s.con_dbid = db.con_dbid
+  where s.sql_id = '&&sql_id'
+)
+select plan_hash_value,
+       count(*) snap_count,
+       to_char(min(begin_interval_time),'dd-mon-yyyy hh24:mi:ss') first_seen,
+       to_char(max(begin_interval_time),'dd-mon-yyyy hh24:mi:ss') last_seen,
+       sum(execs) total_execs,
+       min(avg_etime) min_avg_etime,
+       max(avg_etime) max_avg_etime,
+       case when min(avg_etime)=0 then null else ((max(avg_etime)-min(avg_etime))/min(avg_etime))*100 end etime_spread_pct
+from base
+group by plan_hash_value
+order by plan_hash_value;
 
 PROMPT ******************************************************************
 PROMPT Search for other SQL_ID with the same Force Matching Signature

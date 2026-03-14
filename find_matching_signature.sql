@@ -7,9 +7,28 @@
 -- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
-set lines 180
-set pages 999
+set pages 9999
+set lines 220
+set verify off
+set trimspool on
+set tab off
+set feedback on
+set termout on
+
+whenever sqlerror exit failure rollback
+
 define sql_id ='&1'
+
+begin
+  if '&&sql_id' is null then
+    raise_application_error(-20081, 'SQL_ID is mandatory. Usage: @find_matching_signature.sql <SQL_ID>');
+  end if;
+  if not regexp_like('&&sql_id', '^[[:alnum:]]{13}$') then
+    raise_application_error(-20082, 'Invalid SQL_ID format: &&sql_id');
+  end if;
+end;
+/
+
 --For 19c
 spool find_matching_signature.log
 
@@ -20,6 +39,7 @@ col avg_etime for 999,999.99999
 col avg_lio for 999,999,999.9
 col avg_pio for 999,999,999.9
 col avg_cpu_time for 999,999.99999
+col last_active_time for a19
 
 col obsolete format a9
 
@@ -30,12 +50,16 @@ sum(sq.elapsed_time)/1000000/decode(nvl(sum(sq.executions),0),0,1,sum(sq.executi
 sum(sq.disk_reads)/decode(nvl(sum(sq.executions),0),0,1,sum(sq.executions)) avg_pio,
 sum(sq.buffer_gets)/decode(nvl(sum(sq.executions),0),0,1,sum(sq.executions)) avg_lio,
 sum(sq.cpu_time)/1000000/decode(nvl(sum(sq.executions),0),0,1,sum(sq.executions)) avg_cpu_time,
+to_char(max(sq.last_active_time),'yyyy-mm-dd hh24:mi:ss') last_active_time,
 max(sq.sql_text) sql_text
 from gv$sql sq, gv$sql ss
 where ss.sql_id='&sql_id'
 and (ss.EXACT_MATCHING_SIGNATURE=sq.EXACT_MATCHING_SIGNATURE or ss.FORCE_MATCHING_SIGNATURE=sq.FORCE_MATCHING_SIGNATURE)
 group by sq.inst_id, sq.sql_id, sq.child_number, sq.IS_OBSOLETE, sq.EXACT_MATCHING_SIGNATURE, sq.FORCE_MATCHING_SIGNATURE, sq.plan_hash_value
-order by 1, 2, 3;
+order by avg_etime desc, 1, 2, 3;
+
+prompt
+prompt NOTE: Rows are sorted by AVG_ETIME DESC; focus first on expensive signature matches.
 
 
 spool off

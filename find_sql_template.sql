@@ -19,13 +19,46 @@
 --
 --
 
+set pages 9999
+set lines 220
+set verify off
+set trimspool on
+set tab off
+set feedback on
+set termout on
+
+whenever sqlerror exit failure rollback
+
+define SQL_TEXT = '&1'
+
+begin
+  if '&&SQL_TEXT' is null then
+    raise_application_error(-20041, 'SQL_TEXT extract is mandatory. Usage: @find_sql_template.sql <SQL_TEXT_EXTRACT>');
+  end if;
+end;
+/
+
+prompt
+prompt =====================================================================================================
+prompt Searching SQL in library cache for text extract: &&SQL_TEXT
+prompt =====================================================================================================
+
 col obsolete format a9
+col last_active_time format a19
 col avg_etime for 999,999.99999
 col avg_lio for 999,999,999.9
 col avg_pio for 999,999,999.9
 col avg_cpu_time for 999,999.99999
+col force_matching_signature format 999999999999999999999999
 
-select /* PTK */ inst_id, sql_id, child_number, IS_OBSOLETE, plan_hash_value plan_hash, executions execs,
+select /* PTK */ inst_id,
+sql_id,
+child_number,
+is_obsolete,
+to_char(last_active_time,'yyyy-mm-dd hh24:mi:ss') last_active_time,
+force_matching_signature,
+plan_hash_value plan_hash,
+executions execs,
 (elapsed_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_etime,
 disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio,
 buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,
@@ -35,4 +68,7 @@ where upper(sql_text) like upper('%'||'&SQL_TEXT'||'%')
 and sql_text not like '%from v$sql s where upper%'
 and sql_text not like '%and dbms_lob.substr(txt.sql_text,3999,1) not%'
 and sql_text not like '%/* PTK */%'
-order by 1, 2, 3;
+order by avg_etime desc, inst_id, sql_id, child_number;
+
+prompt
+prompt NOTE: Rows are sorted by AVG_ETIME DESC to surface expensive candidates first.
