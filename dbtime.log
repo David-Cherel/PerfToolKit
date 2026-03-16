@@ -1,0 +1,32 @@
+Enter value for 1: 1
+Enter value for 2: 1
+Enter value for 3:
+
+PL/SQL procedure successfully completed.
+
+
+=====================================================================================================
+AWR DB Time busiest periods (instance=1, begin_snap=1, end_snap=)
+=====================================================================================================
+I am connected to MYDBID : 1648304406
+min_snap in that DB : 11
+max_snap in that DB : 27
+
+
+PL/SQL procedure successfully completed.
+
+Begin Snap: 22, End Snap: 23, Timestamp: 2026-03-15 14:21:34, Instance: 1, DB Time (Min): 4.08
+Begin Snap: 21, End Snap: 22, Timestamp: 2026-03-14 19:00:41, Instance: 1, DB Time (Min): .34
+Begin Snap: 16, End Snap: 17, Timestamp: 2026-03-14 14:00:02, Instance: 1, DB Time (Min): .29
+Begin Snap: 26, End Snap: 27, Timestamp: 2026-03-16 09:52:23, Instance: 1, DB Time (Min): .22
+Begin Snap: 23, End Snap: 24, Timestamp: 2026-03-15 15:00:44, Instance: 1, DB Time (Min): 0
+Begin Snap: 24, End Snap: 25, Timestamp: 2026-03-15 16:00:04, Instance: 1, DB Time (Min): 0
+Begin Snap: 18, End Snap: 19, Timestamp: 2026-03-14 16:00:42, Instance: 1, DB Time (Min): 0
+Begin Snap: 13, End Snap: 14, Timestamp: 2026-03-14 11:00:08, Instance: 1, DB Time (Min): 0
+Begin Snap: 20, End Snap: 21, Timestamp: 2026-03-14 18:00:22, Instance: 1, DB Time (Min): 0
+
+
+PL/SQL procedure successfully completed.
+
+
+NOTE: Output lists the top 10 intervals by DB Time (minutes).

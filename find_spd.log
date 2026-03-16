@@ -1,0 +1,18 @@
+
+DIR_ID                  OWNER    OBJECT_NAME    COL_NAME    OBJECT_TYPE    SCOPE     TYPE                STATE     REASON
+_______________________ ________ ______________ ___________ ______________ _________ ___________________ _________ _______________________________________
+12919266673440144691    SYS      DEPENDENCY$    PROPERTY    COLUMN         COLUMN    DYNAMIC_SAMPLING    USABLE    SINGLE TABLE CARDINALITY MISESTIMATE
+12919266673440144691    SYS      DEPENDENCY$                TABLE          OBJECT    DYNAMIC_SAMPLING    USABLE    SINGLE TABLE CARDINALITY MISESTIMATE
+
+2 rows selected.
+
+
+------------------------------- prompt Summary for schema SYS
+-------------------------------
+
+   NB_DIRECTIVES    NB_OBJECT_LINKS    NB_OBJECT_LEVEL    NB_COLUMN_LEVEL
+________________ __________________ __________________ __________________
+               1                  2                  1                  1
+
+1 row selected.
+

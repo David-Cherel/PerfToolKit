@@ -1,0 +1,48 @@
+
+=====================================================================================================
+Dynamic Statistics diagnosis for SQL_ID=fwzt02k519h5p CHILD_NUMBER=0
+=====================================================================================================
+NOTE: Read-only script. No data change is performed.
+
+--- 1) Cursor context from V$SQL --
+
+SQL_ID              CHILD_NUMBER    PLAN_HASH_VALUE    EXECUTIONS LAST_ACTIVE_TIME       OPTIMIZER_MODE    IS_BIND_SENSITIVE    IS_BIND_AWARE       AVG_ETIME_S    AVG_CPU_S
+________________ _______________ __________________ _____________ ______________________ _________________ ____________________ ________________ ______________ ____________
+fwzt02k519h5p                  0         2052257371             2 2026-03-16 11:56:04    ALL_ROWS          N                    N                      0.003472    0.0027385
+
+1 row selected.
+
+
+--- 2) Plan note probe (dynamic statistics / dynamic sampling note) --
+
+PLAN_NOTE_LINE
+___________________________________________________________
+   - dynamic statistics used: dynamic sampling (level=2)
+
+1 row selected.
+
+
+--- 3) Extracted dynamic sampling level from note text --
+
+DYNAMIC_STATS_USED       DYNAMIC_SAMPLING_LEVEL
+_____________________ _________________________
+YES                                           2
+
+1 row selected.
+
+
+--- 4) Active sessions currently on this SQL_ID/child + session env correlation --
+
+
+0 rows selected.
+
+
+--- 5) Session-level correlation summary vs extracted note level --
+
+
+0 rows selected.
+
+
+--- Action hints -- prompt 1) If note shows dynamic statistics but no active session is found, cursor is historical/inactive now.
+2) SESSION optimizer_dynamic_sampling can differ from level reported in note (internal escalation is possible).
+3) Re-run on an actively executing session for freshest session correlation.

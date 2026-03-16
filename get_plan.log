@@ -1,0 +1,64 @@
+
+=====================================================================================================
+Plan extraction from library cache for SQL_ID: 5yaurap8h97nx
+=====================================================================================================
+NOTE: Read-only script. No data change is performed.
+
+--- Cursor summary (children, execution profile) --
+
+   INST_ID    CHILD_NUMBER    PLAN_HASH_VALUE    EXECUTIONS LAST_ACTIVE_TIME                                             AVG_ETIME_S                                         AVG_CPU_S    AVG_LIO    AVG_PIO IS_OBSOLETE
+__________ _______________ __________________ _____________ ______________________ _________________________________________________ _________________________________________________ __________ __________ ______________
+         1               0                  0           240 2026-03-16 12:25:47       0.00009007916666666666666666666666666666666667    0.00008252083333333333333333333333333333333333          0          0 N
+
+1 row selected.
+
+
+--- Execution plan (ALLSTATS LAST +OUTLINE) --
+
+PLAN_TABLE_OUTPUT
+_______________________________________________________________________________________
+SQL_ID  5yaurap8h97nx, child number 0
+
+declare
+     l_line varchar2(32767);
+     l_done number;
+     l_buffer
+varchar2(32767) := '';
+     l_lengthbuffer number := 0;
+l_lengthline number := 0;
+ begin
+   loop
+     dbms_output.get_line(
+l_line, l_done );
+     if (l_buffer is null) then
+l_lengthbuffer := 0;
+     else
+       l_lengthbuffer :=
+length(l_buffer);
+     end if;
+     if (l_line is null) then
+l_lengthline := 0;
+     else
+       l_lengthline := length(l_line);
+    end if;
+   exit when l_lengthbuffer + l_lengthline > :maxbytes OR
+l_lengthbuffer + l_lengthline > 32767 OR l_done = 1;
+   l_buffer :=
+l_buffer || l_line || chr(10);
+     end loop;
+     :done := l_done;
+    :buffer := l_buffer;
+     :line := l_line;
+ end;
+
+NOTE: cannot fetch plan for SQL_ID: 5yaurap8h97nx, CHILD_NUMBER: 0
+      Please verify value of SQL_ID and CHILD_NUMBER;
+      It could also be that the plan is no longer in cursor cache (check v$sql_plan)
+
+
+18 rows selected.
+
+
+--- Action hints -- prompt 1) If multiple child cursors exist, compare top children by AVG_ETIME_S above.
+2) If A-Rows diverge heavily from E-Rows, investigate object/column stats and bind skew.
+3) If this SQL is aged out from cache, use @get_plan_awr.sql <SQL_ID> [PLAN_HASH_VALUE].

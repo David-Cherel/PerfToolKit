@@ -1,0 +1,97 @@
+
+=====================================================================================================
+ACS diagnosis for SQL_ID=g8408xv3tb19f  CHILD_NUMBER=
+=====================================================================================================
+NOTE: Read-only report. No data change is performed.
+
+--- 0) ACS-related hidden optimizer parameters --
+
+
+0 rows selected.
+
+
+--- 1) V$SQL overview: bind sensitivity / awareness per child cursor --
+
+   CHILD_NUMBER    PLAN_HASH_VALUE IS_BIND_SENSITIVE    IS_BIND_AWARE    IS_SHAREABLE       EXECUTIONS LAST_ACTIVE_TIME          AVG_ETIME_S    AVG_CPU_S    AVG_LIO    AVG_PIO
+_______________ __________________ ____________________ ________________ _______________ _____________ ______________________ ______________ ____________ __________ __________
+              0         1297632073 Y                    N                N                           2 2026-03-16 12:19:53         0.0009885    0.0008925       10.5        2.5
+              1         1297632073 Y                    Y                Y                           1 2026-03-16 12:20:15          0.000961     0.000869          9          0
+              2         2966233522 Y                    Y                N                           1 2026-03-16 12:21:03          0.011155     0.004936       1720       1711
+              3         2966233522 Y                    Y                Y                           1 2026-03-16 12:21:03          0.006555       0.0049       1720          0
+
+4 rows selected.
+
+
+--- 2) V$SQLAREA parent-level snapshot --
+
+SQL_ID              PLAN_HASH_VALUE    VERSION_COUNT    LOADED_VERSIONS    OPEN_VERSIONS    USERS_OPENING    EXECUTIONS PARSING_SCHEMA_NAME    MODULE                                     ACTION
+________________ __________________ ________________ __________________ ________________ ________________ _____________ ______________________ __________________________________________ _________________________
+g8408xv3tb19f            2966233522                4                  4                0                0             5 HR                     Oracle SQL Developer for VS Code/25.4.1    CmiDHO7Z53IRWdyaKKyNPw
+
+1 row selected.
+
+
+--- 3) V$SQL_SHARED_CURSOR (child split reasons) --
+
+   CHILD_NUMBER REASON_TEXT          REASON_HTML
+_______________ ____________________ _________________________________________________________________________________________________
+              0 Bind mismatch(25)    <div class="child-reason"><b>Child 0</b> - <span class="reason">Bind mismatch(25)</span></div>
+              1 Bind mismatch(33)    <div class="child-reason"><b>Child 1</b> - <span class="reason">Bind mismatch(33)</span></div>
+              2 Bind mismatch(33)    <div class="child-reason"><b>Child 2</b> - <span class="reason">Bind mismatch(33)</span></div>
+
+3 rows selected.
+
+
+--- 4) V$SQL_BIND_CAPTURE (captured bind values/types) --
+
+   CHILD_NUMBER NAME        POSITION DATATYPE_STRING    VALUE_STRING    LAST_CAPTURED          WAS_CAPTURED
+_______________ ________ ___________ __________________ _______________ ______________________ _______________
+              0 :MYID              1 NUMBER             10              2026-03-16 12:17:25    YES
+              1 :MYID              1 NUMBER             1000            2026-03-16 12:19:53    YES
+              2 :MYID              1 NUMBER             100000          2026-03-16 12:20:15    YES
+              3 :MYID              1 NUMBER             390000          2026-03-16 12:21:03    YES
+
+4 rows selected.
+
+
+--- 5) V$SQL_CS_SELECTIVITY (ACS selectivity buckets) --
+
+ADDRESS                HASH_VALUE SQL_ID              CHILD_NUMBER PREDICATE       RANGE_ID LOW         HIGH           CON_ID
+___________________ _____________ ________________ _______________ ____________ ___________ ___________ ___________ _________
+0000000066327E30       3348464942 g8408xv3tb19f                  1 <MYID                  0 0.002248    0.002747            3
+0000000066327E30       3348464942 g8408xv3tb19f                  2 <MYID                  0 0.224998    0.274998            3
+0000000066327E30       3348464942 g8408xv3tb19f                  3 <MYID                  0 0.224998    1.072500            3
+
+3 rows selected.
+
+
+--- 6) V$SQL_CS_STATISTICS (ACS runtime statistics) --
+
+
+0 rows selected.
+
+
+--- 7) V$SQL_CS_HISTOGRAM (ACS histogram buckets) --
+
+ADDRESS                HASH_VALUE SQL_ID              CHILD_NUMBER    BUCKET_ID    COUNT    CON_ID
+___________________ _____________ ________________ _______________ ____________ ________ _________
+0000000066327E30       3348464942 g8408xv3tb19f                  0            1        1         3
+0000000066327E30       3348464942 g8408xv3tb19f                  0            0        1         3
+0000000066327E30       3348464942 g8408xv3tb19f                  0            2        0         3
+0000000066327E30       3348464942 g8408xv3tb19f                  1            1        1         3
+0000000066327E30       3348464942 g8408xv3tb19f                  1            0        0         3
+0000000066327E30       3348464942 g8408xv3tb19f                  1            2        0         3
+0000000066327E30       3348464942 g8408xv3tb19f                  2            1        1         3
+0000000066327E30       3348464942 g8408xv3tb19f                  2            0        0         3
+0000000066327E30       3348464942 g8408xv3tb19f                  2            2        0         3
+0000000066327E30       3348464942 g8408xv3tb19f                  3            1        1         3
+0000000066327E30       3348464942 g8408xv3tb19f                  3            0        0         3
+0000000066327E30       3348464942 g8408xv3tb19f                  3            2        0         3
+
+12 rows selected.
+
+
+--- Action hints -- prompt 1) If IS_BIND_SENSITIVE=Y but IS_BIND_AWARE=N, ACS may need more executions.
+2) If many child cursors exist, check V$SQL_SHARED_CURSOR for BIND_MISMATCH/OPTIMIZER_MISMATCH.
+3) Correlate V$SQL_BIND_CAPTURE values with V$SQL_CS_* selectivity buckets.
+4) If bind skew is real, evaluate histogram strategy (prefer pending stats test first).

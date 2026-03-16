@@ -107,11 +107,25 @@ where  sql_id = '&&sql_id';
 prompt
 prompt --- 3) V$SQL_SHARED_CURSOR (child split reasons) ---
 
-select *
-from   v$sql_shared_cursor
-where  sql_id = '&&sql_id'
-and   (nullif('&&child_no','') is null or child_number = to_number(nullif('&&child_no','')))
-order by child_number;
+column reason_text format a80
+column reason_html format a180 word_wrapped
+
+with child_reasons as (
+  select ssc.child_number,
+         xt.reason_text
+  from   v$sql_shared_cursor ssc,
+         xmltable('/ChildNode/reason'
+           passing xmlparse(content ssc.reason)
+           columns reason_text varchar2(4000) path '.') xt
+  where  ssc.sql_id = '&&sql_id'
+  and   (nullif('&&child_no','') is null or ssc.child_number = to_number(nullif('&&child_no','')))
+)
+select child_number,
+       reason_text,
+       '<div class="child-reason"><b>Child '||child_number||'</b> - '
+       ||'<span class="reason">'||reason_text||'</span></div>' as reason_html
+from   child_reasons
+order by child_number, reason_text;
 
 prompt
 prompt --- 4) V$SQL_BIND_CAPTURE (captured bind values/types) ---
