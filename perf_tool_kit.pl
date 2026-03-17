@@ -1056,6 +1056,116 @@ print $result_query;
 
 }
 
+sub show_sql_profile {
+
+my $result_query;
+
+say '----------------------------------------------------------------------';
+say '- Option: SHPF for Showing all SQL Profiles';
+say '- SQL File : show_sql_profiles.sql';
+say '----------------------------------------------------------------------';
+
+my $profile_name;
+print("Enter SQL Profile name filter (blank for all profiles):\n");
+chomp($profile_name = <STDIN>);
+
+$result_query=exec_sql_one_param($connect_string,'show_sql_profiles.sql',$profile_name);
+print $result_query;
+}
+
+sub create_sql_profile {
+
+my $result_query;
+my $task_name;
+my $profile_name;
+my $force_match='YES';
+
+say '----------------------------------------------------------------------';
+say '- Option: CRPF for Creating SQL Profile from SQL Tuning Advisor task';
+say '- SQL File : create_sql_profile.sql';
+say '----------------------------------------------------------------------';
+
+print("Enter SQL Tuning Advisor task name:\n");
+chomp($task_name = <STDIN>);
+print("Enter SQL Profile name:\n");
+chomp($profile_name = <STDIN>);
+print("Force matching? (YES/NO, default YES):\n");
+chomp($force_match = <STDIN>);
+$force_match = 'YES' if !defined($force_match) || $force_match eq '';
+
+$result_query=exec_sql_three_param($connect_string,'create_sql_profile.sql',$task_name,$profile_name,$force_match);
+print $result_query;
+}
+
+sub drop_sql_profile {
+
+my $result_query;
+my $profile_name;
+
+say '----------------------------------------------------------------------';
+say '- Option: DRPF for Dropping SQL Profile';
+say '- SQL File : drop_sql_profile.sql';
+say '----------------------------------------------------------------------';
+
+print("Enter SQL Profile name to drop:\n");
+chomp($profile_name = <STDIN>);
+
+$result_query=exec_sql_one_param($connect_string,'drop_sql_profile.sql',$profile_name);
+print $result_query;
+}
+
+sub sql_profile_menu {
+my $choice;
+do {
+say '----------------------------------------------------------------------';
+say '- Option: SPF for SQL Profile menu';
+say '----------------------------------------------------------------------';
+say ('Enter SHPF for Showing SQL Profiles');
+say ('Enter CRPF for Creating SQL Profile from SQL Tuning task');
+say ('Enter DRPF for Dropping SQL Profile');
+say ('Enter q for going back to main menu');
+chomp($choice = <STDIN>);
+
+if ($choice eq 'SHPF') {
+  show_sql_profile();
+}
+elsif ($choice eq 'CRPF') {
+  create_sql_profile();
+}
+elsif ($choice eq 'DRPF') {
+  drop_sql_profile();
+}
+} while ($choice ne 'q');
+}
+
+sub dispatch_global_shortcut {
+my ($choice) = @_;
+return '' unless defined $choice;
+
+my $cmd = uc($choice);
+my %global_actions = (
+  'SHB' => \&show_sql_baseline,
+  'CRB' => \&create_sql_baseline,
+  'SHP' => \&show_sql_patch,
+  'CRP' => \&create_sql_patch,
+  'SPF' => \&sql_profile_menu,
+);
+
+if ($cmd eq 'HELP') {
+  print_menu();
+  return '__HANDLED__';
+}
+if ($cmd eq 'HOME' || $cmd eq 'BACK' || $cmd eq 'B') {
+  return '__EXIT_MENU__';
+}
+if (exists $global_actions{$cmd}) {
+  $global_actions{$cmd}->();
+  return '__HANDLED__';
+}
+
+return '';
+}
+
 
 sub investigate {
 
@@ -1087,6 +1197,9 @@ do	{
 
 	say ('Enter q for going back to main menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 
 	if ($choice eq 1)
 		{
@@ -1238,6 +1351,9 @@ do	{
 	say ('Enter MEMC for displaying the Top Cursor in Library Cache');
 	say ('Enter q for going back to previous menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 	
 	
 	if ($choice eq 'SUC')
@@ -1316,6 +1432,9 @@ do	{
 	say ('Enter FMSSTA for finding SQL with Matching Signature from another SQL_ID in Statspack Snapshots');
 	say ('Enter q for going back to previous menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 	
 	
 	if ($choice eq 'FSQ')
@@ -1365,6 +1484,9 @@ do	{
 	say ('Enter DPB for displaying exec plan from a SQL Baseline  ');
 	say ('Enter q for going back to main menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 	
 	
 	if ($choice eq 'DPL')
@@ -1414,6 +1536,9 @@ say '----------------------------------------------------------------------';
 	say ('Enter: IMB  for Importing all SQL Baseline from a dump (Data Pump)');
 		say ('Enter q for going back to main menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 
 	if ($choice eq 'SHB')
 		{
@@ -1518,6 +1643,9 @@ say '----------------------------------------------------------------------';
 	say ('Enter DRSPD for dropping SQL Plan directive related to an object: drop_spd.sql '); 
 			say ('Enter q for going back to main menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 
 	if ($choice eq 'SHSPD')
 		{
@@ -1555,6 +1683,9 @@ say '----------------------------------------------------------------------';
 	say ('Enter STPCOMPARE for detecting which SQL queries have changed after a point in time (x days ago) : whats_changed_statspack.sql ');
 	say ('Enter q for going back to main menu  ');	
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 
  if  ($choice eq 'STPSNAP')
 		{
@@ -1633,6 +1764,9 @@ say '----------------------------------------------------------------------';
 	say ('Enter DRP for dropping SQL Patches : drop_sql_patch.sql '); 
 		say ('Enter q for going back to main menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 
 	if ($choice eq 'SHP')
 		{
@@ -1680,6 +1814,9 @@ say '----------------------------------------------------------------------';
 	say ('Enter 6 for Exporting SQL Set : export_sql_set.sql '); 
 		say ('Enter q for going back to main menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 
 	if ($choice eq 1)
 		{
@@ -1776,6 +1913,9 @@ do	{
 	say ('Enter 5 for UnLocking statistics on a table : unlock_table_stats.sql'); 
 	say ('Enter q for going back to main menu  ');
 	chomp($choice = <STDIN>); 
+	my $global_status = dispatch_global_shortcut($choice);
+	if ($global_status eq '__EXIT_MENU__') { last; }
+	elsif ($global_status eq '__HANDLED__') { next; }
 	
 	
 	if ($choice eq 1)
@@ -1848,35 +1988,33 @@ sub print_menu {
 say '***********************************************************************************************';
 say '##########  MENU ##############################################################################';
 say '***********************************************************************************************';
-say '     option: ESQ  for Executing SQL statement or a SQL file ';
-say '     option: FLU  for Flushing SQL statement in History (AWR SnapShot or Statspack Snapshot)';
-say '     option: FSQ  for Finding SQL query in Library Cache, AWR Repository or Statspack Snapshots ';
-#say '     option: FSA  for Finding SQL query in AWR Repository (LICENSE = DIAG PACK)';
-say '     option: DEP  for Displaying Execution Plan from Library Cache, AWR, Statspack or from a SQL Baseline';
-#say '     option: DPL  for Displaying Execution Plan from Library Cache';
-#say '     option: DPA  for Displaying Execution Plan from AWR Repository (LICENSE = DIAG PACK)';
-#say '     option: DPB  for Displaying Execution Plan from SQL Baseline';
-say '     option: SBA  for SQL Baselines menu';
-# say '     option: SHB  for Showing SQL Baselines';
-# say '     option: CRB  for Creating SQL Baseline';
-# say '     option: SWB  for Swapping bad Execution Plan with good Execution Plan while creating SQL Baseline';
-# say '     option: DRB  for Dropping SQL Baseline';
-# say '     option: ADB  for Adding SQL Plan to SQL Baseline (ENTERPRISE EDITION)';
-# say '     option: ALB  for Altering SQL Plan from SQL Baseline';
-# say '     option: EXB  for Exporting SQL Plan from SQL Baseline';
-# say '     option: IMB  for Importing all SQL Baseline from a dump (Data Pump)';
-#say '     option: CRP  for Creating SQL Patch';
-#say '     option: DRP  for Dropping SQL Patch';
-#say '     option: SHP  for Showing SQL Patch';
-say '     option: SPA  for SQL Patch menu';
-say '     option: SQS  for SQL Set menu';
-say '     option: SPD  for SQL Plan Directives menu';
-say '     option: STP  for Statspack menu';
-say '     option: INV  for Investigating general performance issues (LICENSE = DIAG PACK)';
-#say '     option: PAR  for Checking the parameters changes on the instances';
-#say '     option: MON  for Monitoring a SQL statement (LICENSE = TUNING PACK)';
-say '     option: CUR  for Cursor Menu ';
-say '     option: STA  for Statistics menu ';
+say ' Workflow-first shortcuts:';
+say '     IDN  -> identify SQL_ID from text/signature/source (alias of FSQ)';
+say '     ANL  -> analyze execution plans and plan sources (alias of DEP)';
+say '     HIS  -> investigate history/instability/regressions (alias of INV)';
+say '     FIX  -> stabilize with Baseline/Patch/Profile menus';
+say '     VAL  -> validate/monitor (alias of MON)';
+say ' ';
+say ' Core menus (backward compatible):';
+say '     ESQ execute SQL / SQL file';
+say '     FLU flush into history (AWR/Statspack snapshot)';
+say '     FSQ finding SQL';
+say '     DEP display plan';
+say '     SBA SQL Baseline menu';
+say '     SPA SQL Patch menu';
+say '     SPF SQL Profile menu';
+say '     SQS SQL Set menu';
+say '     SPD SQL Plan Directive menu';
+say '     STP Statspack menu';
+say '     INV investigate AWR history';
+say '     CUR cursor menu';
+say '     STA statistics menu';
+say ' ';
+say ' Global shortcuts (usable from any submenu):';
+say '     SHB show SQL Baselines | CRB create Baseline';
+say '     SHP show SQL Patches   | CRP create Patch';
+say '     SPF SQL Profile menu';
+say '     HELP reprint menu | HOME/BACK/B return to previous/main menu';
 }
 
 sub print_memory { }
@@ -2034,6 +2172,7 @@ do
 print_menu();
 print_memory();
 $response=prompt_action();
+$response=uc($response);
 
 my %actions = (
     'ESQ' => \&execute_sql,
@@ -2059,6 +2198,7 @@ my %actions = (
     'DRP' => \&drop_sql_patch,
     'SHP' => \&show_sql_patch,
     'SPA' => \&sql_patch_menu,
+    'SPF' => \&sql_profile_menu,
     'SQS' => \&sql_set_menu,
     'SPD' => \&sql_plan_directive_menu,
     'STP' => \&statspack_menu,
@@ -2068,12 +2208,18 @@ my %actions = (
     'MON' => \&monitoring,
     'CUR' => \&cursor_menu,
     'STA' => \&statistics,
+    'IDN' => \&finding_sql,
+    'ANL' => \&displaying_exec_plan,
+    'HIS' => \&investigate,
+    'FIX' => \&sql_baseline_menu,
+    'VAL' => \&monitoring,
+    'HELP' => \&print_menu,
 );
 
 if (exists $actions{$response}) {
     $actions{$response}->();
 } else {
-    $response = 'Q';
+    say "INFO: Unknown option '$response'. Type HELP to print menu, or Q to quit.";
 }
 
 } while ($response ne 'Q');
