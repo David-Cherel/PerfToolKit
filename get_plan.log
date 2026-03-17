@@ -1,14 +1,14 @@
 
 =====================================================================================================
-Plan extraction from library cache for SQL_ID: 5yaurap8h97nx
+Plan extraction from library cache for SQL_ID: 8ffrr2u2a1g17
 =====================================================================================================
 NOTE: Read-only script. No data change is performed.
 
 --- Cursor summary (children, execution profile) --
 
-   INST_ID    CHILD_NUMBER    PLAN_HASH_VALUE    EXECUTIONS LAST_ACTIVE_TIME                                             AVG_ETIME_S                                         AVG_CPU_S    AVG_LIO    AVG_PIO IS_OBSOLETE
-__________ _______________ __________________ _____________ ______________________ _________________________________________________ _________________________________________________ __________ __________ ______________
-         1               0                  0           240 2026-03-16 12:25:47       0.00009007916666666666666666666666666666666667    0.00008252083333333333333333333333333333333333          0          0 N
+   INST_ID    CHILD_NUMBER    PLAN_HASH_VALUE    EXECUTIONS LAST_ACTIVE_TIME                                           AVG_ETIME_S                                       AVG_CPU_S                                      AVG_LIO                                     AVG_PIO IS_OBSOLETE
+__________ _______________ __________________ _____________ ______________________ _______________________________________________ _______________________________________________ ____________________________________________ ___________________________________________ ______________
+         1               0         2052257371             7 2026-03-17 14:16:48       0.004520142857142857142857142857142857142857    0.002849857142857142857142857142857142857143    96.28571428571428571428571428571428571429    3.28571428571428571428571428571428571429 N
 
 1 row selected.
 
@@ -16,47 +16,84 @@ __________ _______________ __________________ _____________ ____________________
 --- Execution plan (ALLSTATS LAST +OUTLINE) --
 
 PLAN_TABLE_OUTPUT
-_______________________________________________________________________________________
-SQL_ID  5yaurap8h97nx, child number 0
+_________________________________________________________________________________________________________________
+SQL_ID  8ffrr2u2a1g17, child number 0
+-------------------------------------
+SELECT * FROM Employees E JOIN Departments D on E.Department_ID =
+D.DEPARTMENT_ID
 
-declare
-     l_line varchar2(32767);
-     l_done number;
-     l_buffer
-varchar2(32767) := '';
-     l_lengthbuffer number := 0;
-l_lengthline number := 0;
- begin
-   loop
-     dbms_output.get_line(
-l_line, l_done );
-     if (l_buffer is null) then
-l_lengthbuffer := 0;
-     else
-       l_lengthbuffer :=
-length(l_buffer);
-     end if;
-     if (l_line is null) then
-l_lengthline := 0;
-     else
-       l_lengthline := length(l_line);
-    end if;
-   exit when l_lengthbuffer + l_lengthline > :maxbytes OR
-l_lengthbuffer + l_lengthline > 32767 OR l_done = 1;
-   l_buffer :=
-l_buffer || l_line || chr(10);
-     end loop;
-     :done := l_done;
-    :buffer := l_buffer;
-     :line := l_line;
- end;
+Plan hash value: 2052257371
 
-NOTE: cannot fetch plan for SQL_ID: 5yaurap8h97nx, CHILD_NUMBER: 0
-      Please verify value of SQL_ID and CHILD_NUMBER;
-      It could also be that the plan is no longer in cursor cache (check v$sql_plan)
+--------------------------------------------------------------------------------------------------------------
+| Id  | Operation          | Name        | E-Rows |E-Bytes| Cost (%CPU)| E-Time   |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT   |             |        |       |     6 (100)|          |       |       |          |
+|*  1 |  HASH JOIN         |             |    106 | 20034 |     6   (0)| 00:00:01 |  1376K|  1376K| 1630K (0)|
+|   2 |   TABLE ACCESS FULL| DEPARTMENTS |     27 |  1512 |     3   (0)| 00:00:01 |       |       |          |
+|   3 |   TABLE ACCESS FULL| EMPLOYEES   |    107 | 14231 |     3   (0)| 00:00:01 |       |       |          |
+--------------------------------------------------------------------------------------------------------------
+
+Query Block Name / Object Alias (identified by operation id):
+-------------------------------------------------------------
+
+   1 - SEL$58A6D7F6
+   2 - SEL$58A6D7F6 / D@SEL$1
+   3 - SEL$58A6D7F6 / E@SEL$1
+
+Outline Data
+-------------
+
+  /*+
+      BEGIN_OUTLINE_DATA
+      IGNORE_OPTIM_EMBEDDED_HINTS
+      OPTIMIZER_FEATURES_ENABLE('19.1.0')
+      DB_VERSION('19.1.0')
+      OPT_PARAM('_optimizer_use_feedback' 'false')
+      OPT_PARAM('_px_adaptive_dist_method' 'off')
+      OPT_PARAM('_optimizer_strans_adaptive_pruning' 'false')
+      OPT_PARAM('_optimizer_nlj_hj_adaptive_join' 'false')
+      ALL_ROWS
+      OUTLINE_LEAF(@"SEL$58A6D7F6")
+      MERGE(@"SEL$1" >"SEL$2")
+      OUTLINE(@"SEL$2")
+      OUTLINE(@"SEL$1")
+      FULL(@"SEL$58A6D7F6" "D"@"SEL$1")
+      FULL(@"SEL$58A6D7F6" "E"@"SEL$1")
+      LEADING(@"SEL$58A6D7F6" "D"@"SEL$1" "E"@"SEL$1")
+      USE_HASH(@"SEL$58A6D7F6" "E"@"SEL$1")
+      END_OUTLINE_DATA
+  */
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID")
+
+Column Projection Information (identified by operation id):
+-----------------------------------------------------------
+
+   1 - (#keys=1; rowset=256) "D"."DEPARTMENT_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22],
+       "D"."LOCATION_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30], "D"."MANAGER_ID"[NUMBER,22],
+       "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25],
+       "E"."EMAIL"[VARCHAR2,25], "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7],
+       "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22], "E"."COMMISSION_PCT"[NUMBER,22],
+       "E"."MANAGER_ID"[NUMBER,22]
+   2 - (rowset=256) "D"."DEPARTMENT_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30],
+       "D"."MANAGER_ID"[NUMBER,22], "D"."LOCATION_ID"[NUMBER,22]
+   3 - (rowset=256) "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20],
+       "E"."LAST_NAME"[VARCHAR2,25], "E"."EMAIL"[VARCHAR2,25], "E"."PHONE_NUMBER"[VARCHAR2,20],
+       "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22],
+       "E"."COMMISSION_PCT"[NUMBER,22], "E"."MANAGER_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22]
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+   - Warning: basic plan statistics not available. These are only collected when:
+       * hint 'gather_plan_statistics' is used for the statement or
+       * parameter 'statistics_level' is set to 'ALL', at session or system level
 
 
-18 rows selected.
+75 rows selected.
 
 
 --- Action hints -- prompt 1) If multiple child cursors exist, compare top children by AVG_ETIME_S above.
