@@ -1,0 +1,637 @@
+-- #############################################################################################################
+-- Cardinality misestimate diagnosis from SQL_ID (cursor cache)
+--
+-- Purpose:
+--   1) Display execution plan with real-time stats (ALLSTATS LAST)
+--   2) Reconstruct and display chronological operation order (children before parent)
+--   3) Highlight steps with large estimated vs actual cardinality discrepancy
+--   4) Correlate hotspots with predicates/objects and suggest statistics improvements
+--   5) Optionally gather pending stats (APPLY_PENDING=YES), never publish automatically
+--
+-- Usage:
+--   @cardinality_misestimate_diagnosis.sql <SQL_ID> [CHILD_NUMBER]
+--
+-- Examples:
+--   @cardinality_misestimate_diagnosis.sql 4r3harjun4dvz
+--   @cardinality_misestimate_diagnosis.sql 4r3harjun4dvz 0
+
+-- #############################################################################################################
+
+set pages 9999
+set lines 280
+set long 1000000
+set longchunksize 32767
+set verify off
+set trimspool on
+set tab off
+set feedback on
+set termout on
+set serveroutput on
+
+whenever sqlerror exit failure rollback
+
+define sql_id        = '&1'
+define child_no      = '&2'
+define apply_pending = '&3'
+
+begin
+  if '&&sql_id' is null then
+    raise_application_error(-20911,
+      'SQL_ID is mandatory. Usage: @cardinality_misestimate_diagnosis.sql <SQL_ID> [CHILD_NUMBER] [APPLY_PENDING]');
+  end if;
+
+  if not regexp_like('&&sql_id', '^[[:alnum:]]{13}$') then
+    raise_application_error(-20912, 'Invalid SQL_ID format: &&sql_id');
+  end if;
+
+  if '&&child_no' is not null and not regexp_like('&&child_no', '^[0-9]+$') then
+    raise_application_error(-20913, 'CHILD_NUMBER must be numeric when provided.');
+  end if;
+
+  if upper(nvl('&&apply_pending','NO')) not in ('NO','N','YES','Y') then
+    raise_application_error(-20914, 'APPLY_PENDING must be YES/Y or NO/N (or empty).');
+  end if;
+end;
+/
+
+column chosen_child new_value chosen_child noprint
+select case
+         when nullif('&&child_no','') is not null then to_number('&&child_no')
+         else (
+           select child_number
+           from   v$sql
+           where  sql_id = '&&sql_id'
+           order by last_active_time desc nulls last
+           fetch first 1 row only
+         )
+       end as chosen_child
+from dual;
+
+column apply_mode new_value apply_mode noprint
+select case when upper(nvl('&&apply_pending','NO')) in ('YES','Y') then 'YES' else 'NO' end apply_mode
+from dual;
+
+column rt_stats_available new_value rt_stats_available noprint
+select case
+         when exists (
+           select 1
+           from   v$sql_plan_statistics_all
+           where  sql_id = '&&sql_id'
+           and    child_number = case
+                                   when nullif('&&child_no','') is not null then to_number('&&child_no')
+                                   else (
+                                     select child_number
+                                     from   v$sql
+                                     where  sql_id = '&&sql_id'
+                                     order by last_active_time desc nulls last
+                                     fetch first 1 row only
+                                   )
+                                 end
+           and    last_output_rows is not null
+         ) then 'YES'
+         else 'NO'
+       end as rt_stats_available
+from dual;
+
+spool cardinality_misestimate_diagnosis.log
+
+prompt
+prompt =========================================================================================================
+prompt Cardinality misestimate diagnosis for SQL_ID=&&sql_id CHILD_NUMBER=&&chosen_child APPLY_PENDING=&&apply_mode
+prompt =========================================================================================================
+prompt NOTE: Cursor-cache analysis (v$sql_plan_statistics_all). APPLY_PENDING controls optional pending-gather only.
+
+prompt
+prompt --- 0) Selected cursor details ---
+
+column sql_id                   format a13
+column child_number             format 99999
+column is_obsolete              format a11
+column last_active_time         format a19
+column parsing_schema_name      format a25
+column force_matching_signature format 99999999999999999999
+column plan_hash                format 9999999999
+column execs                    format 999999999
+column avg_etime                format 9999990.999999
+column avg_pio                  format 9999999990.99
+column avg_lio                  format 9999999990.99
+column avg_cpu_time             format 9999999990.99
+column sql_text            format a120 word_wrapped
+
+select /* PTK */ sql_id,
+       child_number,
+       is_obsolete,
+       to_char(last_active_time,'yyyy-mm-dd hh24:mi:ss') last_active_time,
+       parsing_schema_name,
+       force_matching_signature,
+       plan_hash_value plan_hash,
+       executions execs,
+       (elapsed_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_etime,
+       disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio,
+       buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,
+       cpu_time/decode(nvl(executions,0),0,1,executions) avg_cpu_time,
+       sql_text
+from   v$sql s
+where  s.sql_id = '&&sql_id'
+and    s.child_number = to_number('&&chosen_child')
+and    s.sql_text not like '%/* PTK */%'
+order by avg_etime desc, sql_id, child_number;
+
+prompt
+prompt --- 1) Full execution plan with real-time stats ---
+
+select *
+from table(
+  dbms_xplan.display_cursor(
+    sql_id          => '&&sql_id',
+    cursor_child_no => to_number('&&chosen_child'),
+    format          => 'ALLSTATS LAST ALL +OUTLINE +PREDICATE +NOTE +ADAPTIVE'
+  )
+);
+
+prompt
+prompt --- 1b) Real-time row-source stats availability check ---
+prompt (If missing, cardinality diagnosis is limited because A-Rows are not populated.)
+
+declare
+  l_patch_name       varchar2(30);
+begin
+  if '&&rt_stats_available' = 'NO' then
+    l_patch_name := substr('PTK_GPS_'||'&&sql_id'||'_'||'&&chosen_child',1,30);
+
+    dbms_output.put_line('WARNING: Basic plan statistics are not available for this cursor child.');
+    dbms_output.put_line('Likely causes:');
+    dbms_output.put_line('  - Query not executed with hint /*+ gather_plan_statistics */');
+    dbms_output.put_line('  - statistics_level not set to ALL (session/system).');
+    dbms_output.put_line(' ');
+    dbms_output.put_line('Recommended command (using existing helper script):');
+    dbms_output.put_line('@create_sql_patch.sql '||'&&sql_id'||' "gather_plan_statistics" '||l_patch_name);
+    dbms_output.put_line(' ');
+    dbms_output.put_line('Equivalent direct command template (advisory, not executed):');
+    dbms_output.put_line('declare v_name varchar2(30); begin');
+    dbms_output.put_line('  v_name := '''||l_patch_name||''';');
+    dbms_output.put_line('  dbms_output.put_line(sys.dbms_sqldiag.create_sql_patch(');
+    dbms_output.put_line('    sql_id => '''||'&&sql_id'||''', hint_text => q''[gather_plan_statistics]'', name => v_name));');
+    dbms_output.put_line('end;');
+    dbms_output.put_line('/');
+  else
+    dbms_output.put_line('OK: real-time row-source statistics detected (last_output_rows populated).');
+  end if;
+end;
+/
+
+prompt
+prompt --- 2) Chronological order of operations (children before parent / post-order by plan tree) ---
+
+column seq         format 99999
+column id          format 99999
+column parent_id   format 99999
+column lvl         format 9999
+column operation   format a32
+column options     format a22
+column object_name format a35
+
+with plan_data as (
+  select id,
+         parent_id,
+         operation,
+         options,
+         object_owner,
+         object_name,
+         object_type,
+         cardinality est_rows,
+         last_output_rows a_rows
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+), roots as (
+  select *
+  from   plan_data
+  where  parent_id is null
+), preordered as (
+  select p.id,
+         p.parent_id,
+         p.operation,
+         p.options,
+         p.object_owner,
+         p.object_name,
+         p.object_type,
+         p.est_rows,
+         p.a_rows,
+         level lvl,
+         sys_connect_by_path(lpad(p.id,5,'0'),'/') as path
+  from   plan_data p
+  start with p.parent_id is null
+  connect by prior p.id = p.parent_id
+  order siblings by p.id
+), pre as (
+  select rownum pre_seq,
+         id,
+         parent_id,
+         operation,
+         options,
+         object_owner,
+         object_name,
+         object_type,
+         est_rows,
+         a_rows,
+         lvl,
+         path
+  from preordered
+), post as (
+  select a.id,
+         max(d.pre_seq) as exit_seq
+  from   pre a
+         join pre d
+           on d.path like a.path || '%'
+  group by a.id
+)
+select row_number() over(order by p2.exit_seq, p.lvl desc, p.pre_seq) as seq,
+       p.id,
+       p.parent_id,
+       p.lvl,
+       p.operation,
+       p.options,
+       p.object_owner,
+       p.object_name,
+       p.object_type,
+       p.est_rows,
+       p.a_rows,
+       round(greatest((nvl(p.a_rows,0)+1)/(nvl(p.est_rows,0)+1),
+                      (nvl(p.est_rows,0)+1)/(nvl(p.a_rows,0)+1)), 2) as mismatch_factor
+from   pre p
+       join post p2 on p2.id = p.id
+order by seq;
+
+prompt
+prompt --- 3) Cardinality misestimate hotspots (highest mismatch first) ---
+
+column hotspots_status format a120
+
+select case
+         when '&&rt_stats_available' = 'NO' then
+           'INFO: section skipped because real-time row-source stats are not available (A-Rows missing).'
+         else
+           'INFO: real-time stats available -> computing hotspot discrepancies.'
+       end as hotspots_status
+from dual;
+
+column access_predicates format a80 word_wrapped
+column filter_predicates format a80 word_wrapped
+
+with plan_data as (
+  select id,
+         parent_id,
+         operation,
+         options,
+         object_owner,
+         object_name,
+         object_type,
+         cardinality est_rows,
+         last_output_rows a_rows,
+         access_predicates,
+         filter_predicates
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+)
+select id,
+       parent_id,
+       operation,
+       options,
+       object_owner,
+       object_name,
+       object_type,
+       est_rows,
+       a_rows,
+       round(greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                      (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)), 2) as mismatch_factor,
+       access_predicates,
+       filter_predicates
+from   plan_data
+where  '&&rt_stats_available' = 'YES'
+and    (access_predicates is not null or filter_predicates is not null or object_name is not null)
+and    greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
+order by mismatch_factor desc, id;
+
+prompt
+prompt --- 4) Predicate alias/column extraction for hotspot steps (best effort) ---
+
+column alias_name  format a25
+column column_name format a35
+column predicate_text format a100 word_wrapped
+
+with plan_data as (
+  select id,
+         parent_id,
+         operation,
+         options,
+         object_owner,
+         object_name,
+         object_type,
+         nvl(access_predicates, filter_predicates) as predicate_text,
+         cardinality est_rows,
+         last_output_rows a_rows,
+         object_alias
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+), hotspots as (
+  select *
+  from   plan_data
+  where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
+  and    predicate_text is not null
+), extracted as (
+  select h.id,
+         h.operation,
+         h.options,
+         h.object_owner,
+         h.object_name,
+         h.object_type,
+         h.predicate_text,
+         upper(regexp_substr(h.predicate_text, '"([^"]+)"\."([^"]+)"', 1, level, null, 1)) alias_name,
+         upper(regexp_substr(h.predicate_text, '"([^"]+)"\."([^"]+)"', 1, level, null, 2)) column_name
+  from   hotspots h
+  connect by prior h.id = h.id
+         and prior sys_guid() is not null
+         and level <= regexp_count(h.predicate_text, '"([^"]+)"\."([^"]+)"')
+), alias_map as (
+  select distinct
+         upper(regexp_substr(object_alias, '^[^@]+')) as alias_name,
+         object_owner,
+         object_name
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+  and    object_alias is not null
+  and    object_name is not null
+)
+select e.id,
+       e.operation,
+       e.options,
+       e.alias_name,
+       e.column_name,
+       nvl(a.object_owner, e.object_owner) as mapped_owner,
+       nvl(a.object_name,  e.object_name)  as mapped_object,
+       e.predicate_text
+from   extracted e
+       left join alias_map a
+         on a.alias_name = e.alias_name
+where  e.alias_name is not null
+order by e.id, e.alias_name, e.column_name;
+
+prompt
+prompt --- 5) Stats health for implicated objects/columns ---
+
+column table_stats_state format a14
+column col_stats_state   format a14
+column histogram         format a15
+column stale_stats       format a6
+
+with plan_data as (
+  select id,
+         nvl(access_predicates, filter_predicates) as predicate_text,
+         object_owner,
+         object_name,
+         object_alias,
+         cardinality est_rows,
+         last_output_rows a_rows
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+), hotspots as (
+  select *
+  from   plan_data
+  where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
+), extracted as (
+  select h.id,
+         upper(regexp_substr(h.predicate_text, '"([^"]+)"\."([^"]+)"', 1, level, null, 1)) alias_name,
+         upper(regexp_substr(h.predicate_text, '"([^"]+)"\."([^"]+)"', 1, level, null, 2)) column_name,
+         h.object_owner,
+         h.object_name
+  from   hotspots h
+  where  h.predicate_text is not null
+  connect by prior h.id = h.id
+         and prior sys_guid() is not null
+         and level <= regexp_count(h.predicate_text, '"([^"]+)"\."([^"]+)"')
+), alias_map as (
+  select distinct
+         upper(regexp_substr(object_alias, '^[^@]+')) as alias_name,
+         object_owner,
+         object_name
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+  and    object_alias is not null
+  and    object_name is not null
+), targets as (
+  select distinct
+         nvl(a.object_owner, e.object_owner) as owner,
+         nvl(a.object_name,  e.object_name)  as table_name,
+         e.column_name
+  from   extracted e
+         left join alias_map a
+           on a.alias_name = e.alias_name
+  where  e.column_name is not null
+)
+select t.owner,
+       t.table_name,
+       t.column_name,
+       case when ts.last_analyzed is null then 'MISSING' else 'OK' end as table_stats_state,
+       ts.stale_stats,
+       to_char(ts.last_analyzed,'yyyy-mm-dd hh24:mi:ss') as table_last_analyzed,
+       case when cs.last_analyzed is null then 'MISSING' else 'OK' end as col_stats_state,
+       cs.histogram,
+       cs.num_distinct,
+       cs.num_buckets,
+       to_char(cs.last_analyzed,'yyyy-mm-dd hh24:mi:ss') as col_last_analyzed
+from   targets t
+       left join dba_tab_statistics ts
+         on ts.owner = t.owner
+        and ts.table_name = t.table_name
+       left join dba_tab_col_statistics cs
+         on cs.owner = t.owner
+        and cs.table_name = t.table_name
+        and cs.column_name = t.column_name
+order by t.owner, t.table_name, t.column_name;
+
+prompt
+prompt --- 6) Existing extension stats on implicated tables ---
+
+column extension format a90 word_wrapped
+
+with implicated_tables as (
+  select distinct object_owner owner, object_name table_name
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+  and    object_owner is not null
+  and    object_name is not null
+)
+select e.owner,
+       e.table_name,
+       e.extension_name,
+       e.extension
+from   dba_stat_extensions e
+       join implicated_tables t
+         on t.owner = e.owner
+        and t.table_name = e.table_name
+order by e.owner, e.table_name, e.extension_name;
+
+prompt
+prompt --- 7) Advisory recommendations and generated commands (not executed) ---
+
+column recommendation format a180 word_wrapped
+column advisory_status format a120
+
+select case
+         when '&&rt_stats_available' = 'NO' then
+           'INFO: section skipped because real-time row-source stats are not available (A-Rows missing).'
+         else
+           'INFO: real-time stats available -> generating advisory recommendations.'
+       end as advisory_status
+from dual;
+
+with plan_data as (
+  select id,
+         operation,
+         options,
+         object_owner,
+         object_name,
+         cardinality est_rows,
+         last_output_rows a_rows,
+         nvl(access_predicates, filter_predicates) as predicate_text
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+), hotspots as (
+  select *
+  from   plan_data
+  where  '&&rt_stats_available' = 'YES'
+  and    greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
+)
+select 'HOTSPOT ID '||id||' -> mismatch='||
+       round(greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                      (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)),2)||
+       ', OP='||operation||' '||nvl(options,'')||
+       ', OBJ='||nvl(object_owner||'.'||object_name,'(none)') as recommendation
+from hotspots
+union all
+select 'COMMAND: exec dbms_stats.set_table_prefs('''||object_owner||''','''||object_name||''',''PUBLISH'',''FALSE'');'
+from   (select distinct object_owner, object_name
+        from hotspots
+        where object_owner is not null
+        and object_name is not null)
+union all
+select 'COMMAND: exec dbms_stats.gather_table_stats('''||object_owner||''','''||object_name||''', method_opt=>''FOR ALL COLUMNS SIZE AUTO'', cascade=>dbms_stats.auto_cascade, no_invalidate=>false);'
+from   (select distinct object_owner, object_name
+        from hotspots
+        where object_owner is not null
+        and object_name is not null)
+union all
+select 'COMMAND TEMPLATE (extended stats): select dbms_stats.create_extended_stats('''||object_owner||''','''||object_name||''',''(<col1>,<col2>)'') from dual;'
+from   (select distinct object_owner, object_name
+        from hotspots
+        where object_owner is not null
+        and object_name is not null)
+order by 1;
+
+prompt
+prompt --- 8) Optional APPLY_PENDING execution (pending gather only; never publish) ---
+
+declare
+  v_apply varchar2(3) := upper(nvl('&&apply_mode','NO'));
+begin
+  if v_apply in ('YES','Y') then
+    dbms_output.put_line('APPLY_PENDING=YES -> gathering pending stats on hotspot objects...');
+
+    for r in (
+      with hotspots as (
+        select distinct object_owner, object_name
+        from   v$sql_plan_statistics_all
+        where  sql_id = '&&sql_id'
+        and    child_number = to_number('&&chosen_child')
+        and    greatest((nvl(last_output_rows,0)+1)/(nvl(cardinality,0)+1),
+                       (nvl(cardinality,0)+1)/(nvl(last_output_rows,0)+1)) >= 5
+        and    object_owner is not null
+        and    object_name is not null
+      )
+      select object_owner, object_name
+      from hotspots
+    ) loop
+      begin
+        dbms_stats.set_table_prefs(
+          ownname => r.object_owner,
+          tabname => r.object_name,
+          pname   => 'PUBLISH',
+          pvalue  => 'FALSE'
+        );
+
+        dbms_stats.gather_table_stats(
+          ownname       => r.object_owner,
+          tabname       => r.object_name,
+          method_opt    => 'FOR ALL COLUMNS SIZE AUTO',
+          cascade       => dbms_stats.auto_cascade,
+          no_invalidate => false
+        );
+
+        dbms_output.put_line('  OK: pending stats gathered for '||r.object_owner||'.'||r.object_name);
+      exception
+        when others then
+          dbms_output.put_line('  WARN: could not gather pending stats for '||r.object_owner||'.'||r.object_name||' -> '||sqlerrm);
+      end;
+    end loop;
+  else
+    dbms_output.put_line('APPLY_PENDING=NO -> advisory mode only, no DBMS_STATS gather executed.');
+  end if;
+end;
+/
+
+prompt
+prompt --- 9) Pending stats visibility for implicated tables ---
+
+with implicated_tables as (
+  select distinct object_owner owner, object_name table_name
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+  and    object_owner is not null
+  and    object_name is not null
+)
+select p.owner,
+       p.table_name
+from   dba_tab_pending_stats p
+       join implicated_tables t
+         on t.owner = p.owner
+        and t.table_name = p.table_name
+order by p.owner, p.table_name;
+
+prompt
+
+prompt --- 10) Suggested validation workflow ---
+
+declare
+begin
+  if '&&rt_stats_available' = 'NO' then
+    dbms_output.put_line('INFO: section skipped because real-time row-source stats are not available (A-Rows missing).');
+  else
+    dbms_output.put_line('1) Test session with pending stats ON:');
+    dbms_output.put_line('     alter session set optimizer_use_pending_statistics=true;');
+    dbms_output.put_line('     -- run the target SQL with /*+ gather_plan_statistics */');
+    dbms_output.put_line('     select * from table(dbms_xplan.display_cursor(null,null,''ALLSTATS LAST ALL +PREDICATE +NOTE''));');
+    dbms_output.put_line('2) Baseline session with pending stats OFF:');
+    dbms_output.put_line('     alter session set optimizer_use_pending_statistics=false;');
+    dbms_output.put_line('     -- run same SQL and compare elapsed/cpu/buffer gets/rowsource A-rows vs E-rows');
+    dbms_output.put_line('3) If validated, publish (manual command, not executed by this script):');
+    dbms_output.put_line('     exec dbms_stats.publish_pending_stats(''<OWNER>'',''<TABLE_NAME>'');');
+  end if;
+end;
+/
+
+spool off
+
+exit;

@@ -70,7 +70,7 @@ from table(
   dbms_xplan.display_cursor(
     sql_id          => '&&sql_id',
     cursor_child_no => null,
-    format          => 'ALLSTATS LAST ALL +OUTLINE +PEEKED_BINDS +NOTE'
+    format          => 'ALLSTATS LAST ALL +OUTLINE +PEEKED_BINDS +NOTE +ADAPTIVE'
   )
 );
 
