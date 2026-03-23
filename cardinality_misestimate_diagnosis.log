@@ -1,14 +1,14 @@
 
 =========================================================================================================
-Cardinality misestimate diagnosis for SQL_ID=8ffrr2u2a1g17 CHILD_NUMBER=0 APPLY_PENDING=NO
+Cardinality misestimate diagnosis for SQL_ID=bp80ayhsn76x4 CHILD_NUMBER=0 APPLY_PENDING=NO
 =========================================================================================================
 NOTE: Cursor-cache analysis (v$sql_plan_statistics_all). APPLY_PENDING controls optional pending-gather only.
 
 --- 0) Selected cursor details --
 
-SQL_ID              CHILD_NUMBER IS_OBSOLETE    LAST_ACTIVE_TIME       PARSING_SCHEMA_NAME       FORCE_MATCHING_SIGNATURE     PLAN_HASH    EXECS                                       AVG_ETIME                                     AVG_PIO                                      AVG_LIO                                 AVG_CPU_TIME SQL_TEXT
-________________ _______________ ______________ ______________________ ______________________ ___________________________ _____________ ________ _______________________________________________ ___________________________________________ ____________________________________________ ____________________________________________ ____________________________________________________________________________________
-8ffrr2u2a1g17                  0 N              2026-03-17 14:16:48    HR                            16634843658909733655    2052257371        7    0.004520142857142857142857142857142857142857    3.28571428571428571428571428571428571429    96.28571428571428571428571428571428571429    2849.857142857142857142857142857142857143 SELECT * FROM Employees E JOIN Departments D on E.Department_ID = D.DEPARTMENT_ID
+SQL_ID              CHILD_NUMBER IS_OBSOLETE    LAST_ACTIVE_TIME       PARSING_SCHEMA_NAME       FORCE_MATCHING_SIGNATURE     PLAN_HASH    EXECS    AVG_ETIME    AVG_PIO    AVG_LIO    AVG_CPU_TIME SQL_TEXT
+________________ _______________ ______________ ______________________ ______________________ ___________________________ _____________ ________ ____________ __________ __________ _______________ _________________________________________________________________________________________________________________
+bp80ayhsn76x4                  0 N              2026-03-23 14:12:24    HR                             3243653306662341510    1343509718        5    0.0006146          0       12.4           433.8 SELECT /*+gather_plan_statistics */ * FROM Employees E JOIN Departments D on E.Department_ID = D.DEPARTMENT_ID
 
 1 row selected.
 
@@ -16,29 +16,32 @@ ________________ _______________ ______________ ______________________ _________
 --- 1) Full execution plan with real-time stats --
 
 PLAN_TABLE_OUTPUT
-_________________________________________________________________________________________________________________
-SQL_ID  8ffrr2u2a1g17, child number 0
+____________________________________________________________________________________________________________________________________________________________________
+SQL_ID  bp80ayhsn76x4, child number 0
 -------------------------------------
-SELECT * FROM Employees E JOIN Departments D on E.Department_ID =
-D.DEPARTMENT_ID
+SELECT /*+gather_plan_statistics */ * FROM Employees E JOIN Departments
+D on E.Department_ID = D.DEPARTMENT_ID
 
-Plan hash value: 2052257371
+Plan hash value: 1343509718
 
---------------------------------------------------------------------------------------------------------------
-| Id  | Operation          | Name        | E-Rows |E-Bytes| Cost (%CPU)| E-Time   |  OMem |  1Mem | Used-Mem |
---------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT   |             |        |       |     6 (100)|          |       |       |          |
-|*  1 |  HASH JOIN         |             |    106 | 20034 |     6   (0)| 00:00:01 |  1376K|  1376K| 1630K (0)|
-|   2 |   TABLE ACCESS FULL| DEPARTMENTS |     27 |  1512 |     3   (0)| 00:00:01 |       |       |          |
-|   3 |   TABLE ACCESS FULL| EMPLOYEES   |    107 | 14231 |     3   (0)| 00:00:01 |       |       |          |
---------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                    | Name        | Starts | E-Rows |E-Bytes| Cost (%CPU)| E-Time   | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT             |             |      1 |        |       |     6 (100)|          |    106 |00:00:00.01 |      12 |       |       |          |
+|   1 |  MERGE JOIN                  |             |      1 |    106 |  9540 |     6  (17)| 00:00:01 |    106 |00:00:00.01 |      12 |       |       |          |
+|   2 |   TABLE ACCESS BY INDEX ROWID| DEPARTMENTS |      1 |     27 |   567 |     2   (0)| 00:00:01 |     27 |00:00:00.01 |       6 |       |       |          |
+|   3 |    INDEX FULL SCAN           | DEPT_ID_PK  |      1 |     27 |       |     1   (0)| 00:00:01 |     27 |00:00:00.01 |       3 |       |       |          |
+|*  4 |   SORT JOIN                  |             |     27 |    107 |  7383 |     4  (25)| 00:00:01 |    106 |00:00:00.01 |       6 | 22528 | 22528 |20480  (0)|
+|   5 |    TABLE ACCESS FULL         | EMPLOYEES   |      1 |    107 |  7383 |     3   (0)| 00:00:01 |    107 |00:00:00.01 |       6 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Query Block Name / Object Alias (identified by operation id):
 -------------------------------------------------------------
 
    1 - SEL$58A6D7F6
    2 - SEL$58A6D7F6 / D@SEL$1
-   3 - SEL$58A6D7F6 / E@SEL$1
+   3 - SEL$58A6D7F6 / D@SEL$1
+   5 - SEL$58A6D7F6 / E@SEL$1
 
 Outline Data
 -------------
@@ -57,83 +60,51 @@ Outline Data
       MERGE(@"SEL$1" >"SEL$2")
       OUTLINE(@"SEL$2")
       OUTLINE(@"SEL$1")
-      FULL(@"SEL$58A6D7F6" "D"@"SEL$1")
+      INDEX(@"SEL$58A6D7F6" "D"@"SEL$1" ("DEPARTMENTS"."DEPARTMENT_ID"))
       FULL(@"SEL$58A6D7F6" "E"@"SEL$1")
       LEADING(@"SEL$58A6D7F6" "D"@"SEL$1" "E"@"SEL$1")
-      USE_HASH(@"SEL$58A6D7F6" "E"@"SEL$1")
+      USE_MERGE(@"SEL$58A6D7F6" "E"@"SEL$1")
       END_OUTLINE_DATA
   */
 
 Predicate Information (identified by operation id):
 ---------------------------------------------------
 
-   1 - access("E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID")
+   4 - access("E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID")
+       filter("E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID")
 
 Column Projection Information (identified by operation id):
 -----------------------------------------------------------
 
-   1 - (#keys=1; rowset=256) "D"."DEPARTMENT_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22],
-       "D"."LOCATION_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30], "D"."MANAGER_ID"[NUMBER,22],
-       "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25],
-       "E"."EMAIL"[VARCHAR2,25], "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7],
-       "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22], "E"."COMMISSION_PCT"[NUMBER,22],
+   1 - "D"."DEPARTMENT_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22], "D"."LOCATION_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30],
+       "D"."MANAGER_ID"[NUMBER,22], "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25], "E"."EMAIL"[VARCHAR2,25],
+       "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22], "E"."COMMISSION_PCT"[NUMBER,22],
        "E"."MANAGER_ID"[NUMBER,22]
-   2 - (rowset=256) "D"."DEPARTMENT_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30],
-       "D"."MANAGER_ID"[NUMBER,22], "D"."LOCATION_ID"[NUMBER,22]
-   3 - (rowset=256) "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20],
-       "E"."LAST_NAME"[VARCHAR2,25], "E"."EMAIL"[VARCHAR2,25], "E"."PHONE_NUMBER"[VARCHAR2,20],
-       "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22],
-       "E"."COMMISSION_PCT"[NUMBER,22], "E"."MANAGER_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22]
-
-Note
------
-   - dynamic statistics used: dynamic sampling (level=2)
-   - Warning: basic plan statistics not available. These are only collected when:
-       * hint 'gather_plan_statistics' is used for the statement or
-       * parameter 'statistics_level' is set to 'ALL', at session or system level
+   2 - "D"."DEPARTMENT_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30], "D"."MANAGER_ID"[NUMBER,22], "D"."LOCATION_ID"[NUMBER,22]
+   3 - "D".ROWID[ROWID,10], "D"."DEPARTMENT_ID"[NUMBER,22]
+   4 - (#keys=1) "E"."DEPARTMENT_ID"[NUMBER,22], "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25],
+       "E"."EMAIL"[VARCHAR2,25], "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22],
+       "E"."COMMISSION_PCT"[NUMBER,22], "E"."MANAGER_ID"[NUMBER,22]
+   5 - "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25], "E"."EMAIL"[VARCHAR2,25],
+       "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22], "E"."COMMISSION_PCT"[NUMBER,22],
+       "E"."MANAGER_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22]
 
 
-75 rows selected.
+72 rows selected.
 
 
 --- 1b) Real-time row-source stats availability check -- prompt (If missing, cardinality diagnosis is limited because A-Rows are not populated.)
-WARNING: Basic plan statistics are not available for this cursor child.
-Likely causes:
-  - Query not executed with hint /*+ gather_plan_statistics */
-  - statistics_level not set to ALL (session/system).
-
-Recommended command (using existing helper script):
-@create_sql_patch.sql 8ffrr2u2a1g17 "gather_plan_statistics" PTK_GPS_8ffrr2u2a1g17_0
-
-Equivalent direct command template (advisory, not executed):
-declare v_name varchar2(30); begin
-  v_name := 'PTK_GPS_8ffrr2u2a1g17_0';
-  dbms_output.put_line(sys.dbms_sqldiag.create_sql_patch(
-    sql_id => '8ffrr2u2a1g17', hint_text => q'[gather_plan_statistics]', name => v_name));
-end;
-/
+OK: real-time row-source statistics detected (last_output_rows populated).
 
 
 PL/SQL procedure successfully completed.
 
 
---- 2) Chronological order of operations (children before parent / post-order by plan tree) --
-
-   SEQ    ID    PARENT_ID    LVL OPERATION           OPTIONS    OBJECT_OWNER    OBJECT_NAME    OBJECT_TYPE       EST_ROWS    A_ROWS    MISMATCH_FACTOR
-______ _____ ____________ ______ ___________________ __________ _______________ ______________ ______________ ___________ _________ __________________
-     1     2            1      3 TABLE ACCESS        FULL       HR              DEPARTMENTS    TABLE                   27                           28
-     2     3            1      3 TABLE ACCESS        FULL       HR              EMPLOYEES      TABLE                  107                          108
-     3     1            0      2 HASH JOIN                                                                            106                          107
-     4     0                   1 SELECT STATEMENT                                                                                                    1
-
-4 rows selected.
-
-
 --- 3) Cardinality misestimate hotspots (highest mismatch first) --
 
 HOTSPOTS_STATUS
-_______________________________________________________________________________________________
-INFO: section skipped because real-time row-source stats are not available (A-Rows missing).
+______________________________________________________________________
+INFO: real-time stats available -> computing hotspot discrepancies.
 
 1 row selected.
 
@@ -144,21 +115,14 @@ INFO: section skipped because real-time row-source stats are not available (A-Ro
 
 --- 4) Predicate alias/column extraction for hotspot steps (best effort) --
 
-   ID OPERATION    OPTIONS    ALIAS_NAME    COLUMN_NAME      MAPPED_OWNER    MAPPED_OBJECT    PREDICATE_TEXT
-_____ ____________ __________ _____________ ________________ _______________ ________________ __________________________________________
-    1 HASH JOIN               D             DEPARTMENT_ID                                     "E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID"
-    1 HASH JOIN               E             DEPARTMENT_ID                                     "E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID"
 
-2 rows selected.
+0 rows selected.
 
 
 --- 5) Stats health for implicated objects/columns --
 
-OWNER    TABLE_NAME    COLUMN_NAME      TABLE_STATS_STATE    STALE_STATS    TABLE_LAST_ANALYZED    COL_STATS_STATE    HISTOGRAM       NUM_DISTINCT    NUM_BUCKETS COL_LAST_ANALYZED
-________ _____________ ________________ ____________________ ______________ ______________________ __________________ ____________ _______________ ______________ ____________________
-                       DEPARTMENT_ID    MISSING                                                    MISSING
 
-1 row selected.
+0 rows selected.
 
 
 --- 6) Existing extension stats on implicated tables --
@@ -170,14 +134,17 @@ ________ _____________ ________________ ____________________ ______________ ____
 --- 7) Advisory recommendations and generated commands (not executed) --
 
 ADVISORY_STATUS
-_______________________________________________________________________________________________
-INFO: section skipped because real-time row-source stats are not available (A-Rows missing).
+__________________________________________________________________________
+INFO: real-time stats available -> generating advisory recommendations.
 
 1 row selected.
 
 
+RECOMMENDATION
+____________________________________________________________
+HOTSPOT ID 0 -> mismatch=107, OP=SELECT STATEMENT , OBJ=.
 
-0 rows selected.
+1 row selected.
 
 
 --- 8) Optional APPLY_PENDING execution (pending gather only; never publish) --
@@ -194,7 +161,15 @@ PL/SQL procedure successfully completed.
 
 
 --- 10) Suggested validation workflow --
-INFO: section skipped because real-time row-source stats are not available (A-Rows missing).
+1) Test session with pending stats ON:
+     alter session set optimizer_use_pending_statistics=true;
+     -- run the target SQL with /*+ gather_plan_statistics */
+     select * from table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST ALL +PREDICATE +NOTE'));
+2) Baseline session with pending stats OFF:
+     alter session set optimizer_use_pending_statistics=false;
+     -- run same SQL and compare elapsed/cpu/buffer gets/rowsource A-rows vs E-rows
+3) If validated, publish (manual command, not executed by this script):
+     exec dbms_stats.publish_pending_stats('<OWNER>','<TABLE_NAME>');
 
 
 PL/SQL procedure successfully completed.

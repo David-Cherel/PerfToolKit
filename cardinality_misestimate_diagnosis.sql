@@ -1,21 +1,31 @@
 -- #############################################################################################################
--- Cardinality misestimate diagnosis from SQL_ID (cursor cache)
---
--- Purpose:
---   1) Display execution plan with real-time stats (ALLSTATS LAST)
---   2) Reconstruct and display chronological operation order (children before parent)
---   3) Highlight steps with large estimated vs actual cardinality discrepancy
---   4) Correlate hotspots with predicates/objects and suggest statistics improvements
---   5) Optionally gather pending stats (APPLY_PENDING=YES), never publish automatically
---
--- Usage:
---   @cardinality_misestimate_diagnosis.sql <SQL_ID> [CHILD_NUMBER] [APPLY_PENDING]
---
--- Examples:
---   @cardinality_misestimate_diagnosis.sql 4r3harjun4dvz
---   @cardinality_misestimate_diagnosis.sql 4r3harjun4dvz 0
---   @cardinality_misestimate_diagnosis.sql 4r3harjun4dvz 0 YES
+-- FILE: cardinality_misestimate_diagnosis.sql
 -- #############################################################################################################
+--
+-- PURPOSE:
+-- Diagnoses cardinality misestimates for a SQL_ID from cursor cache by comparing estimated versus actual rows, listing hotspot operations, correlating predicates and stats health, and optionally gathering pending statistics for validation.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze (13 alphanumeric characters)
+-- &2 (child_no) - NUMBER - Optional child cursor number; if omitted, latest active child is selected
+-- &3 (apply_pending) - STRING - Optional YES/Y or NO/N flag to gather pending stats on hotspot objects
+--
+-- OUTPUT DESCRIPTION:
+-- Multiple diagnostic result sections including selected cursor details, DBMS_XPLAN output, operation chronology, mismatch hotspots, predicate/column extraction, stats health checks, advisory commands, and pending stats visibility.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which plan operations for this SQL_ID show the largest estimated versus actual row mismatches?
+-- Is real-time row-source statistics data available for the selected child cursor?
+-- What are the execution profile metrics for the selected SQL child cursor?
+-- Which predicates and objects are associated with cardinality hotspot operations?
+-- Which implicated columns lack useful statistics or histograms?
+-- Are table statistics stale or missing for impacted objects?
+-- Are there existing extended statistics on impacted tables?
+-- What DBMS_STATS commands are recommended to validate or improve estimates?
+-- Were pending statistics gathered for hotspot objects when APPLY_PENDING is enabled?
+-- Which pending statistics entries exist for implicated tables after analysis?
+-- REM EMBEDDINGS END
 
 set pages 9999
 set lines 280
@@ -112,10 +122,10 @@ column parsing_schema_name      format a25
 column force_matching_signature format 99999999999999999999
 column plan_hash                format 9999999999
 column execs                    format 999999999
-column avg_etime                format 9999990.999999
+column avg_ela_time_ms          format 9999990.999999
 column avg_pio                  format 9999999990.99
 column avg_lio                  format 9999999990.99
-column avg_cpu_time             format 9999999990.99
+column avg_cpu_time_ms          format 9999999990.99
 column sql_text            format a120 word_wrapped
 
 select /* PTK */ sql_id,
@@ -126,16 +136,16 @@ select /* PTK */ sql_id,
        force_matching_signature,
        plan_hash_value plan_hash,
        executions execs,
-       (elapsed_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_etime,
+       (elapsed_time/1000)/decode(nvl(executions,0),0,1,executions) avg_ela_time_ms,
        disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio,
        buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,
-       cpu_time/decode(nvl(executions,0),0,1,executions) avg_cpu_time,
+       (cpu_time/1000)/decode(nvl(executions,0),0,1,executions) avg_cpu_time_ms,
        sql_text
 from   v$sql s
 where  s.sql_id = '&&sql_id'
 and    s.child_number = to_number('&&chosen_child')
 and    s.sql_text not like '%/* PTK */%'
-order by avg_etime desc, sql_id, child_number;
+order by avg_ela_time_ms desc, sql_id, child_number;
 
 prompt
 prompt --- 1) Full execution plan with real-time stats ---
@@ -179,89 +189,6 @@ begin
   end if;
 end;
 /
-
-prompt
-prompt --- 2) Chronological order of operations (children before parent / post-order by plan tree) ---
-
-column seq         format 99999
-column id          format 99999
-column parent_id   format 99999
-column lvl         format 9999
-column operation   format a32
-column options     format a22
-column object_name format a35
-
-with plan_data as (
-  select id,
-         parent_id,
-         operation,
-         options,
-         object_owner,
-         object_name,
-         object_type,
-         cardinality est_rows,
-         last_output_rows a_rows
-  from   v$sql_plan_statistics_all
-  where  sql_id = '&&sql_id'
-  and    child_number = to_number('&&chosen_child')
-), roots as (
-  select *
-  from   plan_data
-  where  parent_id is null
-), preordered as (
-  select p.id,
-         p.parent_id,
-         p.operation,
-         p.options,
-         p.object_owner,
-         p.object_name,
-         p.object_type,
-         p.est_rows,
-         p.a_rows,
-         level lvl,
-         sys_connect_by_path(lpad(p.id,5,'0'),'/') as path
-  from   plan_data p
-  start with p.parent_id is null
-  connect by prior p.id = p.parent_id
-  order siblings by p.id
-), pre as (
-  select rownum pre_seq,
-         id,
-         parent_id,
-         operation,
-         options,
-         object_owner,
-         object_name,
-         object_type,
-         est_rows,
-         a_rows,
-         lvl,
-         path
-  from preordered
-), post as (
-  select a.id,
-         max(d.pre_seq) as exit_seq
-  from   pre a
-         join pre d
-           on d.path like a.path || '%'
-  group by a.id
-)
-select row_number() over(order by p2.exit_seq, p.lvl desc, p.pre_seq) as seq,
-       p.id,
-       p.parent_id,
-       p.lvl,
-       p.operation,
-       p.options,
-       p.object_owner,
-       p.object_name,
-       p.object_type,
-       p.est_rows,
-       p.a_rows,
-       round(greatest((nvl(p.a_rows,0)+1)/(nvl(p.est_rows,0)+1),
-                      (nvl(p.est_rows,0)+1)/(nvl(p.a_rows,0)+1)), 2) as mismatch_factor
-from   pre p
-       join post p2 on p2.id = p.id
-order by seq;
 
 prompt
 prompt --- 3) Cardinality misestimate hotspots (highest mismatch first) ---
