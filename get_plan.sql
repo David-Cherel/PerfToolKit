@@ -48,7 +48,8 @@ column avg_pio          format 999,999,999.9
 prompt
 prompt --- Cursor summary (children, execution profile) ---
 
-select inst_id,
+/* PTK: Local instance scope with V$SQL (no INST_ID dimension) */
+select
        child_number,
        plan_hash_value,
        executions,
@@ -58,9 +59,9 @@ select inst_id,
        buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,
        disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio,
        is_obsolete
-from gv$sql
+from v$sql
 where sql_id = '&&sql_id'
-order by avg_etime_s desc, inst_id, child_number;
+order by avg_etime_s desc, child_number;
 
 prompt
 prompt --- Execution plan (ALLSTATS LAST +OUTLINE) ---

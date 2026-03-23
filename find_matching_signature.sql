@@ -44,7 +44,8 @@ col last_active_time for a19
 col obsolete format a9
 
 
-/* PTK */ select sq.inst_id instance, sq.sql_id sql_id, sq.child_number child_number, sq.IS_OBSOLETE obsolete, sq.EXACT_MATCHING_SIGNATURE exact_matching_signature, sq.FORCE_MATCHING_SIGNATURE force_matching_signature, sq.plan_hash_value plan_hash,
+/* PTK: Local instance scope with V$ views (no RAC-wide INST_ID dimension) */
+select sq.sql_id sql_id, sq.child_number child_number, sq.IS_OBSOLETE obsolete, sq.EXACT_MATCHING_SIGNATURE exact_matching_signature, sq.FORCE_MATCHING_SIGNATURE force_matching_signature, sq.plan_hash_value plan_hash,
 sum(sq.executions) execs,
 sum(sq.elapsed_time)/1000000/decode(nvl(sum(sq.executions),0),0,1,sum(sq.executions)) avg_etime,
 sum(sq.disk_reads)/decode(nvl(sum(sq.executions),0),0,1,sum(sq.executions)) avg_pio,
@@ -52,11 +53,11 @@ sum(sq.buffer_gets)/decode(nvl(sum(sq.executions),0),0,1,sum(sq.executions)) avg
 sum(sq.cpu_time)/1000000/decode(nvl(sum(sq.executions),0),0,1,sum(sq.executions)) avg_cpu_time,
 to_char(max(sq.last_active_time),'yyyy-mm-dd hh24:mi:ss') last_active_time,
 max(sq.sql_text) sql_text
-from gv$sql sq, gv$sql ss
+from v$sql sq, v$sql ss
 where ss.sql_id='&sql_id'
 and (ss.EXACT_MATCHING_SIGNATURE=sq.EXACT_MATCHING_SIGNATURE or ss.FORCE_MATCHING_SIGNATURE=sq.FORCE_MATCHING_SIGNATURE)
-group by sq.inst_id, sq.sql_id, sq.child_number, sq.IS_OBSOLETE, sq.EXACT_MATCHING_SIGNATURE, sq.FORCE_MATCHING_SIGNATURE, sq.plan_hash_value
-order by avg_etime desc, 1, 2, 3;
+group by sq.sql_id, sq.child_number, sq.IS_OBSOLETE, sq.EXACT_MATCHING_SIGNATURE, sq.FORCE_MATCHING_SIGNATURE, sq.plan_hash_value
+order by avg_etime desc, sq.sql_id, sq.child_number;
 
 prompt
 prompt NOTE: Rows are sorted by AVG_ETIME DESC; focus first on expensive signature matches.

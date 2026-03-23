@@ -1,7 +1,7 @@
 -- #############################################################################################################
 -- Find SQL Query in in Shared Pool (Library Cache) and displays KPI's 
 -- Accept an extract of sql_text as inputs (ptompted)
--- Display : inst_id, SQL_ID, CHILD,PLAN_HASH, 	EXECS ,	AVG_ETIME ,	AVG_LIO ,SQL_TEXT
+-- Display : SQL_ID, CHILD, PLAN_HASH, EXECS, AVG_ETIME, AVG_LIO, SQL_TEXT
 -- Allows to show performance KPI's for that SQL_ID and plan_hash_value 
 -- #############################################################################################################
 
@@ -51,8 +51,8 @@ col avg_pio for 999,999,999.9
 col avg_cpu_time for 999,999.99999
 col force_matching_signature format 999999999999999999999999
 
-select /* PTK */ inst_id,
-sql_id,
+/* PTK: Local instance scope with V$SQL (no INST_ID dimension) */
+select sql_id,
 child_number,
 is_obsolete,
 to_char(last_active_time,'yyyy-mm-dd hh24:mi:ss') last_active_time,
@@ -63,12 +63,12 @@ executions execs,
 disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio,
 buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,
 cpu_time/decode(nvl(executions,0),0,1,executions) avg_cpu_time,
-sql_text from gv$sql s
+sql_text from v$sql s
 where upper(sql_text) like upper('%'||'&SQL_TEXT'||'%')
 and sql_text not like '%from v$sql s where upper%'
 and sql_text not like '%and dbms_lob.substr(txt.sql_text,3999,1) not%'
 and sql_text not like '%/* PTK */%'
-order by avg_etime desc, inst_id, sql_id, child_number;
+order by avg_etime desc, sql_id, child_number;
 
 prompt
 prompt NOTE: Rows are sorted by AVG_ETIME DESC to surface expensive candidates first.
