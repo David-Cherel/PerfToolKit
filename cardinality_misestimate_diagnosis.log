@@ -1,14 +1,14 @@
 
 =========================================================================================================
-Cardinality misestimate diagnosis for SQL_ID=bp80ayhsn76x4 CHILD_NUMBER=0 APPLY_PENDING=NO
+Cardinality misestimate diagnosis for SQL_ID=bp80ayhsn76x4 CHILD_NUMBER=1 APPLY_PENDING=NO
 =========================================================================================================
 NOTE: Cursor-cache analysis (v$sql_plan_statistics_all). APPLY_PENDING controls optional pending-gather only.
 
 --- 0) Selected cursor details --
 
-SQL_ID              CHILD_NUMBER IS_OBSOLETE    LAST_ACTIVE_TIME       PARSING_SCHEMA_NAME       FORCE_MATCHING_SIGNATURE     PLAN_HASH    EXECS    AVG_ETIME    AVG_PIO    AVG_LIO    AVG_CPU_TIME SQL_TEXT
-________________ _______________ ______________ ______________________ ______________________ ___________________________ _____________ ________ ____________ __________ __________ _______________ _________________________________________________________________________________________________________________
-bp80ayhsn76x4                  0 N              2026-03-23 14:12:24    HR                             3243653306662341510    1343509718        5    0.0006146          0       12.4           433.8 SELECT /*+gather_plan_statistics */ * FROM Employees E JOIN Departments D on E.Department_ID = D.DEPARTMENT_ID
+SQL_ID              CHILD_NUMBER IS_OBSOLETE    LAST_ACTIVE_TIME       PARSING_SCHEMA_NAME       FORCE_MATCHING_SIGNATURE     PLAN_HASH    EXECS    AVG_ELA_TIME_MS    AVG_PIO    AVG_LIO    AVG_CPU_TIME_MS SQL_TEXT
+________________ _______________ ______________ ______________________ ______________________ ___________________________ _____________ ________ __________________ __________ __________ __________________ _________________________________________________________________________________________________________________
+bp80ayhsn76x4                  1 N              2026-03-23 15:15:47    HR                             3243653306662341510    1021246405        5             1.2188          0       35.6             1.0946 SELECT /*+gather_plan_statistics */ * FROM Employees E JOIN Departments D on E.Department_ID = D.DEPARTMENT_ID
 
 1 row selected.
 
@@ -16,31 +16,31 @@ bp80ayhsn76x4                  0 N              2026-03-23 14:12:24    HR       
 --- 1) Full execution plan with real-time stats --
 
 PLAN_TABLE_OUTPUT
-____________________________________________________________________________________________________________________________________________________________________
-SQL_ID  bp80ayhsn76x4, child number 0
+_______________________________________________________________________________________________________________________________________________
+SQL_ID  bp80ayhsn76x4, child number 1
 -------------------------------------
 SELECT /*+gather_plan_statistics */ * FROM Employees E JOIN Departments
 D on E.Department_ID = D.DEPARTMENT_ID
 
-Plan hash value: 1343509718
+Plan hash value: 1021246405
 
------------------------------------------------------------------------------------------------------------------------------------------------------------------
-| Id  | Operation                    | Name        | Starts | E-Rows |E-Bytes| Cost (%CPU)| E-Time   | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT             |             |      1 |        |       |     6 (100)|          |    106 |00:00:00.01 |      12 |       |       |          |
-|   1 |  MERGE JOIN                  |             |      1 |    106 |  9540 |     6  (17)| 00:00:01 |    106 |00:00:00.01 |      12 |       |       |          |
-|   2 |   TABLE ACCESS BY INDEX ROWID| DEPARTMENTS |      1 |     27 |   567 |     2   (0)| 00:00:01 |     27 |00:00:00.01 |       6 |       |       |          |
-|   3 |    INDEX FULL SCAN           | DEPT_ID_PK  |      1 |     27 |       |     1   (0)| 00:00:01 |     27 |00:00:00.01 |       3 |       |       |          |
-|*  4 |   SORT JOIN                  |             |     27 |    107 |  7383 |     4  (25)| 00:00:01 |    106 |00:00:00.01 |       6 | 22528 | 22528 |20480  (0)|
-|   5 |    TABLE ACCESS FULL         | EMPLOYEES   |      1 |    107 |  7383 |     3   (0)| 00:00:01 |    107 |00:00:00.01 |       6 |       |       |          |
------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                    | Name              | Starts | E-Rows |E-Bytes| Cost (%CPU)| E-Time   | A-Rows |   A-Time   | Buffers |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT             |                   |      1 |        |       |    57 (100)|          |    106 |00:00:00.01 |      26 |
+|   1 |  NESTED LOOPS                |                   |      1 |   1000K|   148M|    57   (0)| 00:00:01 |    106 |00:00:00.01 |      26 |
+|   2 |   NESTED LOOPS               |                   |      1 |   1000K|   148M|    57   (0)| 00:00:01 |    106 |00:00:00.01 |      15 |
+|   3 |    TABLE ACCESS FULL         | DEPARTMENTS       |      1 |     27 |  1512 |     3   (0)| 00:00:01 |     27 |00:00:00.01 |       9 |
+|*  4 |    INDEX RANGE SCAN          | EMP_DEPARTMENT_IX |     27 |     32 |       |     1   (0)| 00:00:01 |    106 |00:00:00.01 |       6 |
+|   5 |   TABLE ACCESS BY INDEX ROWID| EMPLOYEES         |    106 |  37037 |  3616K|     2   (0)| 00:00:01 |    106 |00:00:00.01 |      11 |
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 Query Block Name / Object Alias (identified by operation id):
 -------------------------------------------------------------
 
    1 - SEL$58A6D7F6
-   2 - SEL$58A6D7F6 / D@SEL$1
    3 - SEL$58A6D7F6 / D@SEL$1
+   4 - SEL$58A6D7F6 / E@SEL$1
    5 - SEL$58A6D7F6 / E@SEL$1
 
 Outline Data
@@ -60,10 +60,11 @@ Outline Data
       MERGE(@"SEL$1" >"SEL$2")
       OUTLINE(@"SEL$2")
       OUTLINE(@"SEL$1")
-      INDEX(@"SEL$58A6D7F6" "D"@"SEL$1" ("DEPARTMENTS"."DEPARTMENT_ID"))
-      FULL(@"SEL$58A6D7F6" "E"@"SEL$1")
+      FULL(@"SEL$58A6D7F6" "D"@"SEL$1")
+      INDEX(@"SEL$58A6D7F6" "E"@"SEL$1" ("EMPLOYEES"."DEPARTMENT_ID"))
       LEADING(@"SEL$58A6D7F6" "D"@"SEL$1" "E"@"SEL$1")
-      USE_MERGE(@"SEL$58A6D7F6" "E"@"SEL$1")
+      USE_NL(@"SEL$58A6D7F6" "E"@"SEL$1")
+      NLJ_BATCHING(@"SEL$58A6D7F6" "E"@"SEL$1")
       END_OUTLINE_DATA
   */
 
@@ -71,26 +72,28 @@ Predicate Information (identified by operation id):
 ---------------------------------------------------
 
    4 - access("E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID")
-       filter("E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID")
 
 Column Projection Information (identified by operation id):
 -----------------------------------------------------------
 
-   1 - "D"."DEPARTMENT_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22], "D"."LOCATION_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30],
-       "D"."MANAGER_ID"[NUMBER,22], "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25], "E"."EMAIL"[VARCHAR2,25],
-       "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22], "E"."COMMISSION_PCT"[NUMBER,22],
-       "E"."MANAGER_ID"[NUMBER,22]
-   2 - "D"."DEPARTMENT_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30], "D"."MANAGER_ID"[NUMBER,22], "D"."LOCATION_ID"[NUMBER,22]
-   3 - "D".ROWID[ROWID,10], "D"."DEPARTMENT_ID"[NUMBER,22]
-   4 - (#keys=1) "E"."DEPARTMENT_ID"[NUMBER,22], "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25],
-       "E"."EMAIL"[VARCHAR2,25], "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22],
-       "E"."COMMISSION_PCT"[NUMBER,22], "E"."MANAGER_ID"[NUMBER,22]
+   1 - "D"."DEPARTMENT_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30], "D"."MANAGER_ID"[NUMBER,22],
+       "D"."LOCATION_ID"[NUMBER,22], "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25],
+       "E"."EMAIL"[VARCHAR2,25], "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10],
+       "E"."SALARY"[NUMBER,22], "E"."COMMISSION_PCT"[NUMBER,22], "E"."MANAGER_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22]
+   2 - "D"."DEPARTMENT_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30], "D"."MANAGER_ID"[NUMBER,22],
+       "D"."LOCATION_ID"[NUMBER,22], "E".ROWID[ROWID,10], "E"."DEPARTMENT_ID"[NUMBER,22]
+   3 - "D"."DEPARTMENT_ID"[NUMBER,22], "D"."DEPARTMENT_NAME"[VARCHAR2,30], "D"."MANAGER_ID"[NUMBER,22], "D"."LOCATION_ID"[NUMBER,22]
+   4 - "E".ROWID[ROWID,10], "E"."DEPARTMENT_ID"[NUMBER,22]
    5 - "E"."EMPLOYEE_ID"[NUMBER,22], "E"."FIRST_NAME"[VARCHAR2,20], "E"."LAST_NAME"[VARCHAR2,25], "E"."EMAIL"[VARCHAR2,25],
-       "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22], "E"."COMMISSION_PCT"[NUMBER,22],
-       "E"."MANAGER_ID"[NUMBER,22], "E"."DEPARTMENT_ID"[NUMBER,22]
+       "E"."PHONE_NUMBER"[VARCHAR2,20], "E"."HIRE_DATE"[DATE,7], "E"."JOB_ID"[VARCHAR2,10], "E"."SALARY"[NUMBER,22],
+       "E"."COMMISSION_PCT"[NUMBER,22], "E"."MANAGER_ID"[NUMBER,22]
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
 
 
-72 rows selected.
+75 rows selected.
 
 
 --- 1b) Real-time row-source stats availability check -- prompt (If missing, cardinality diagnosis is limited because A-Rows are not populated.)
@@ -109,17 +112,56 @@ INFO: real-time stats available -> computing hotspot discrepancies.
 1 row selected.
 
 
+   ID    PARENT_ID OPERATION       OPTIONS           OBJECT_OWNER    OBJECT_NAME          OBJECT_TYPE       EST_ROWS    A_ROWS    MISMATCH_FACTOR ACCESS_PREDICATES                          FILTER_PREDICATES
+_____ ____________ _______________ _________________ _______________ ____________________ ______________ ___________ _________ __________________ __________________________________________ ____________________
+    5            1 TABLE ACCESS    BY INDEX ROWID    HR              EMPLOYEES            TABLE                37037       106             346.15
+    4            2 INDEX           RANGE SCAN        HR              EMP_DEPARTMENT_IX    INDEX                   32       106               3.24 "E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID"
 
-0 rows selected.
+2 rows selected.
 
 
 --- 4) Predicate alias/column extraction for hotspot steps (best effort) --
 
+   ID OPERATION    OPTIONS       ALIAS_NAME    COLUMN_NAME      MAPPED_OWNER    MAPPED_OBJECT        PREDICATE_TEXT
+_____ ____________ _____________ _____________ ________________ _______________ ____________________ __________________________________________
+    4 INDEX        RANGE SCAN    D             DEPARTMENT_ID    HR              EMP_DEPARTMENT_IX    "E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID"
+    4 INDEX        RANGE SCAN    E             DEPARTMENT_ID    HR              EMP_DEPARTMENT_IX    "E"."DEPARTMENT_ID"="D"."DEPARTMENT_ID"
 
-0 rows selected.
+2 rows selected.
 
 
 --- 5) Stats health for implicated objects/columns --
+--- 5a) Hotspot objects from execution plan (typed) --
+
+OWNER    OBJECT_NAME          OBJECT_TYPE
+________ ____________________ ______________
+HR       EMP_DEPARTMENT_IX    INDEX
+HR       EMPLOYEES            TABLE
+
+2 rows selected.
+
+
+--- 5b) Object-level stats presence (table/index) --
+
+OWNER    OBJECT_NAME          OBJECT_TYPE    STATS_STATE    STATS_STATUS    STALE_STATS    LAST_ANALYZED
+________ ____________________ ______________ ______________ _______________ ______________ ______________________
+HR       EMP_DEPARTMENT_IX    INDEX          MISSING        MISSING
+HR       EMPLOYEES            TABLE          OK             FRESH           NO             2026-03-23 15:11:57
+
+2 rows selected.
+
+
+--- 5c) Partition stats coverage (table partitions and index partitions) --
+
+OWNER    OBJECT_NAME          OBJECT_TYPE           PARTITION_ROWS    PARTITION_WITH_STATS_ROWS    PARTITION_STALE_ROWS
+________ ____________________ __________________ _________________ ____________________________ _______________________
+HR       EMP_DEPARTMENT_IX    INDEX PARTITION                    0                            0                       0
+HR       EMPLOYEES            TABLE PARTITION                    0                            0                       0
+
+2 rows selected.
+
+
+--- 5d) Column stats and histograms for implicated predicate columns --
 
 
 0 rows selected.
@@ -141,10 +183,20 @@ INFO: real-time stats available -> generating advisory recommendations.
 
 
 RECOMMENDATION
-____________________________________________________________
+__________________________________________________________________________________________________________________________________________________________________________
+COMMAND TEMPLATE (extended stats): select dbms_stats.create_extended_stats('HR','EMPLOYEES','(<col1>,<col2>)') from dual;
+COMMAND TEMPLATE (extended stats): select dbms_stats.create_extended_stats('HR','EMP_DEPARTMENT_IX','(<col1>,<col2>)') from dual;
+COMMAND: exec dbms_stats.gather_table_stats('HR','EMPLOYEES', method_opt=>'FOR ALL COLUMNS SIZE AUTO', cascade=>dbms_stats.auto_cascade, no_invalidate=>false);
+COMMAND: exec dbms_stats.gather_table_stats('HR','EMP_DEPARTMENT_IX', method_opt=>'FOR ALL COLUMNS SIZE AUTO', cascade=>dbms_stats.auto_cascade, no_invalidate=>false);
+COMMAND: exec dbms_stats.set_table_prefs('HR','EMPLOYEES','PUBLISH','FALSE');
+COMMAND: exec dbms_stats.set_table_prefs('HR','EMP_DEPARTMENT_IX','PUBLISH','FALSE');
 HOTSPOT ID 0 -> mismatch=107, OP=SELECT STATEMENT , OBJ=.
+HOTSPOT ID 1 -> mismatch=9345.8, OP=NESTED LOOPS , OBJ=.
+HOTSPOT ID 2 -> mismatch=9345.8, OP=NESTED LOOPS , OBJ=.
+HOTSPOT ID 4 -> mismatch=3.24, OP=INDEX RANGE SCAN, OBJ=HR.EMP_DEPARTMENT_IX
+HOTSPOT ID 5 -> mismatch=346.15, OP=TABLE ACCESS BY INDEX ROWID, OBJ=HR.EMPLOYEES
 
-1 row selected.
+11 rows selected.
 
 
 --- 8) Optional APPLY_PENDING execution (pending gather only; never publish) --

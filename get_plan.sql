@@ -49,8 +49,7 @@ prompt
 prompt --- Cursor summary (children, execution profile) ---
 
 /* PTK: Local instance scope with V$SQL (no INST_ID dimension) */
-select
-       child_number,
+select child_number,
        plan_hash_value,
        executions,
        to_char(last_active_time,'yyyy-mm-dd hh24:mi:ss') last_active_time,

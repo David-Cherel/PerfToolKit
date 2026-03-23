@@ -61,8 +61,8 @@ where  name in (
 order by name;
 
 column last_active_time   format a19
-column avg_etime_s        format 999,999.99999
-column avg_cpu_s          format 999,999.99999
+column avg_ela_time_ms        format 999,999.99
+column avg_cpu_time_ms          format 999,999.99
 column avg_lio            format 999,999,999.9
 column avg_pio            format 999,999,999.9
 column is_bind_sensitive  format a3
@@ -79,8 +79,8 @@ select child_number,
        is_shareable,
        executions,
        to_char(last_active_time,'yyyy-mm-dd hh24:mi:ss') last_active_time,
-       (elapsed_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_etime_s,
-       (cpu_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_cpu_s,
+       (elapsed_time/1000)/decode(nvl(executions,0),0,1,executions) avg_ela_time_ms,
+       (cpu_time/1000)/decode(nvl(executions,0),0,1,executions) avg_cpu_time_ms,
        buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,
        disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio
 from   v$sql

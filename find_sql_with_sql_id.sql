@@ -31,10 +31,10 @@ end;
 col obsolete format a9
 col last_active_time format a19
 col force_matching_signature format 999999999999999999999999
-col avg_etime for 999,999.99999
+col avg_ela_time_ms for 999,999.99
 col avg_lio for 999,999,999.9
 col avg_pio for 999,999,999.9
-col avg_cpu_time for 999,999.99999
+col avg_cpu_time_ms for 999,999.99
 
 
 spool find_sql_with_sql_id.log
@@ -51,10 +51,10 @@ to_char(last_active_time,'yyyy-mm-dd hh24:mi:ss') last_active_time,
 force_matching_signature,
 plan_hash_value plan_hash,
 executions execs,
-(elapsed_time/1000000)/decode(nvl(executions,0),0,1,executions) avg_etime,
+(elapsed_time/1000)/decode(nvl(executions,0),0,1,executions) avg_ela_time_ms,
 disk_reads/decode(nvl(executions,0),0,1,executions) avg_pio,
 buffer_gets/decode(nvl(executions,0),0,1,executions) avg_lio,
-cpu_time/decode(nvl(executions,0),0,1,executions) avg_cpu_time,
+(cpu_time/1000)/decode(nvl(executions,0),0,1,executions) avg_cpu_time_ms,
 sql_text from v$sql s
 where s.sql_id='&sql_id'
 order by avg_etime desc, sql_id, child_number;

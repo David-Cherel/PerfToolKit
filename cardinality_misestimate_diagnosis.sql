@@ -155,7 +155,7 @@ from table(
   dbms_xplan.display_cursor(
     sql_id          => '&&sql_id',
     cursor_child_no => to_number('&&chosen_child'),
-    format          => 'ALLSTATS LAST ALL +OUTLINE +PREDICATE +NOTE'
+    format          => 'ALLSTATS LAST ALL +OUTLINE +PREDICATE +NOTE +ADAPTIVE'
   )
 );
 
@@ -239,7 +239,7 @@ from   plan_data
 where  '&&rt_stats_available' = 'YES'
 and    (access_predicates is not null or filter_predicates is not null or object_name is not null)
 and    greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 10
+                (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
 order by mismatch_factor desc, id;
 
 prompt
@@ -268,7 +268,7 @@ with plan_data as (
   select *
   from   plan_data
   where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 10
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
   and    predicate_text is not null
 ), extracted as (
   select h.id,
@@ -312,16 +312,170 @@ order by e.id, e.alias_name, e.column_name;
 prompt
 prompt --- 5) Stats health for implicated objects/columns ---
 
+column object_type       format a20
+column stats_state       format a14
+column stats_status      format a14
 column table_stats_state format a14
 column col_stats_state   format a14
+column col_stats_status  format a14
 column histogram         format a15
 column stale_stats       format a6
+
+prompt --- 5a) Hotspot objects from execution plan (typed) ---
+
+with plan_data as (
+  select object_owner,
+         object_name,
+         object_type,
+         cardinality est_rows,
+         last_output_rows a_rows
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+), hotspots as (
+  select distinct object_owner,
+                  object_name,
+                  object_type
+  from   plan_data
+  where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+  and    object_owner is not null
+  and    object_name is not null
+  and    object_type in ('TABLE','INDEX','TABLE PARTITION','INDEX PARTITION','TABLE SUBPARTITION','INDEX SUBPARTITION')
+)
+select object_owner as owner,
+       object_name,
+       object_type
+from   hotspots
+order by object_owner, object_type, object_name;
+
+prompt
+prompt --- 5b) Object-level stats presence (table/index) ---
+
+with plan_data as (
+  select object_owner,
+         object_name,
+         object_type,
+         cardinality est_rows,
+         last_output_rows a_rows
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')
+), hotspot_objects as (
+  select distinct object_owner,
+                  object_name,
+                  object_type
+  from   plan_data
+  where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+  and    object_owner is not null
+  and    object_name is not null
+  and    object_type in ('TABLE','INDEX','TABLE PARTITION','INDEX PARTITION','TABLE SUBPARTITION','INDEX SUBPARTITION')
+)
+select h.object_owner as owner,
+       h.object_name,
+       h.object_type,
+       case
+         when h.object_type like 'INDEX%' then case when i.last_analyzed is null then 'MISSING' else 'OK' end
+         when h.object_type like 'TABLE%' then case when t.last_analyzed is null then 'MISSING' else 'OK' end
+         else 'N/A'
+       end as stats_state,
+       case
+         when h.object_type like 'INDEX%' and i.last_analyzed is null then 'MISSING'
+         when h.object_type like 'TABLE%' and t.last_analyzed is null then 'MISSING'
+         when h.object_type like 'INDEX%' and i.stale_stats = 'YES' then 'STALE'
+         when h.object_type like 'TABLE%' and t.stale_stats = 'YES' then 'STALE'
+         when h.object_type like 'INDEX%' and i.stale_stats = 'NO' then 'FRESH'
+         when h.object_type like 'TABLE%' and t.stale_stats = 'NO' then 'FRESH'
+         else 'UNKNOWN'
+       end as stats_status,
+       case
+         when h.object_type like 'INDEX%' then i.stale_stats
+         when h.object_type like 'TABLE%' then t.stale_stats
+         else null
+       end as stale_stats,
+       case
+         when h.object_type like 'INDEX%' then to_char(i.last_analyzed,'yyyy-mm-dd hh24:mi:ss')
+         when h.object_type like 'TABLE%' then to_char(t.last_analyzed,'yyyy-mm-dd hh24:mi:ss')
+         else null
+       end as last_analyzed
+from   hotspot_objects h
+       left join dba_tab_statistics t
+         on h.object_type like 'TABLE%'
+        and t.owner = h.object_owner
+        and t.table_name = h.object_name
+        and t.partition_name is null
+       left join dba_ind_statistics i
+         on h.object_type like 'INDEX%'
+        and i.owner = h.object_owner
+        and i.index_name = h.object_name
+        and i.partition_name is null
+order by h.object_owner, h.object_type, h.object_name;
+
+prompt
+prompt --- 5c) Partition stats coverage (table partitions and index partitions) ---
+
+with plan_data as (
+  select object_owner,
+         object_name,
+         object_type,
+         cardinality est_rows,
+         last_output_rows a_rows
+  from   v$sql_plan_statistics_all
+  where  sql_id = '&&sql_id'
+  and    child_number = to_number('&&chosen_child')),
+  hotspot_tables as (select distinct object_owner as owner,
+                  object_name  as table_name
+  from   plan_data
+  where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+  and    object_owner is not null
+  and    object_name is not null
+  and    object_type like 'TABLE%'), 
+  hotspot_indexes as (select distinct object_owner as owner,
+                  object_name  as index_name
+  from   plan_data
+  where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+  and    object_owner is not null
+  and    object_name is not null
+  and    object_type like 'INDEX%')
+select t.owner,
+       t.table_name as object_name,
+       'TABLE PARTITION' as object_type,
+       count(ts.partition_name) as partition_rows,
+       sum(case when ts.last_analyzed is not null then 1 else 0 end) as partition_with_stats_rows,
+       sum(case when ts.stale_stats = 'YES' then 1 else 0 end) as partition_stale_rows
+from   hotspot_tables t
+       left join dba_tab_statistics ts
+         on ts.owner = t.owner
+        and ts.table_name = t.table_name
+        and ts.partition_name is not null
+group by t.owner, t.table_name
+union all
+select i.owner,
+       i.index_name as object_name,
+       'INDEX PARTITION' as object_type,
+       count(is2.partition_name) as partition_rows,
+       sum(case when is2.last_analyzed is not null then 1 else 0 end) as partition_with_stats_rows,
+       sum(case when is2.stale_stats = 'YES' then 1 else 0 end) as partition_stale_rows
+from   hotspot_indexes i
+       left join dba_ind_statistics is2
+         on is2.owner = i.owner
+        and is2.index_name = i.index_name
+        and is2.partition_name is not null
+group by i.owner, i.index_name
+order by 1, 3, 2;
+
+prompt
+prompt --- 5d) Column stats and histograms for implicated predicate columns ---
 
 with plan_data as (
   select id,
          nvl(access_predicates, filter_predicates) as predicate_text,
          object_owner,
          object_name,
+         object_type,
          object_alias,
          cardinality est_rows,
          last_output_rows a_rows
@@ -332,13 +486,14 @@ with plan_data as (
   select *
   from   plan_data
   where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 10
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
 ), extracted as (
   select h.id,
          upper(regexp_substr(h.predicate_text, '"([^"]+)"\."([^"]+)"', 1, level, null, 1)) alias_name,
          upper(regexp_substr(h.predicate_text, '"([^"]+)"\."([^"]+)"', 1, level, null, 2)) column_name,
          h.object_owner,
-         h.object_name
+         h.object_name,
+         h.object_type
   from   hotspots h
   where  h.predicate_text is not null
   connect by prior h.id = h.id
@@ -348,7 +503,8 @@ with plan_data as (
   select distinct
          upper(regexp_substr(object_alias, '^[^@]+')) as alias_name,
          object_owner,
-         object_name
+         object_name,
+         object_type
   from   v$sql_plan_statistics_all
   where  sql_id = '&&sql_id'
   and    child_number = to_number('&&chosen_child')
@@ -357,7 +513,11 @@ with plan_data as (
 ), targets as (
   select distinct
          nvl(a.object_owner, e.object_owner) as owner,
-         nvl(a.object_name,  e.object_name)  as table_name,
+         case
+           when a.object_type like 'TABLE%' then a.object_name
+           when e.object_type like 'TABLE%' then e.object_name
+           else null
+         end as table_name,
          e.column_name
   from   extracted e
          left join alias_map a
@@ -368,9 +528,21 @@ select t.owner,
        t.table_name,
        t.column_name,
        case when ts.last_analyzed is null then 'MISSING' else 'OK' end as table_stats_state,
+       case
+         when ts.last_analyzed is null then 'MISSING'
+         when ts.stale_stats = 'YES' then 'STALE'
+         when ts.stale_stats = 'NO' then 'FRESH'
+         else 'UNKNOWN'
+       end as stats_status,
        ts.stale_stats,
        to_char(ts.last_analyzed,'yyyy-mm-dd hh24:mi:ss') as table_last_analyzed,
        case when cs.last_analyzed is null then 'MISSING' else 'OK' end as col_stats_state,
+       case
+         when cs.last_analyzed is null then 'MISSING'
+         when ts.stale_stats = 'YES' then 'STALE'
+         when ts.stale_stats = 'NO' then 'FRESH'
+         else 'UNKNOWN'
+       end as col_stats_status,
        cs.histogram,
        cs.num_distinct,
        cs.num_buckets,
@@ -379,10 +551,12 @@ from   targets t
        left join dba_tab_statistics ts
          on ts.owner = t.owner
         and ts.table_name = t.table_name
+        and ts.partition_name is null
        left join dba_tab_col_statistics cs
          on cs.owner = t.owner
         and cs.table_name = t.table_name
         and cs.column_name = t.column_name
+where  t.table_name is not null
 order by t.owner, t.table_name, t.column_name;
 
 prompt
@@ -439,7 +613,7 @@ with plan_data as (
   from   plan_data
   where  '&&rt_stats_available' = 'YES'
   and    greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 10
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
 )
 select 'HOTSPOT ID '||id||' -> mismatch='||
        round(greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
@@ -483,7 +657,7 @@ begin
         where  sql_id = '&&sql_id'
         and    child_number = to_number('&&chosen_child')
         and    greatest((nvl(last_output_rows,0)+1)/(nvl(cardinality,0)+1),
-                       (nvl(cardinality,0)+1)/(nvl(last_output_rows,0)+1)) >= 10
+                       (nvl(cardinality,0)+1)/(nvl(last_output_rows,0)+1)) >= 2
         and    object_owner is not null
         and    object_name is not null
       )
