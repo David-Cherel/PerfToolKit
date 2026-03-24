@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: rsm_html.sql
 -- #############################################################################################################
@@ -22,6 +23,8 @@
 -- EXAMPLE : rsm_html.sql cm1fyt76dwbkb
 -- #############################################################################################################
 --
+spool rsm_html.log
+
 set pagesize 0 echo off timing off linesize 1000 trimspool on trim on long 2000000 longchunksize 2000000 feedback off
 col report for a400
 -- accept sid  prompt "Enter value for sid: "
@@ -31,7 +34,6 @@ col report for a400
 define sql_id = '&1' 
 
 
-spool sqlmonitor_&&sql_id\.html
 
 select
 DBMS_SQL_MONITOR.REPORT_SQL_MONITOR(
@@ -44,10 +46,7 @@ from dual;
 
 undef sql_id
 
+
+
 spool off
-
-
 exit;
-
-
-

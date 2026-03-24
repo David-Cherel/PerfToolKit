@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: drop_sql_plan.sql
 -- #############################################################################################################
@@ -24,12 +25,13 @@
 -- EXAMPLE : drop_sql_plan.sql SQLID_auy3f5g7da1_2481688974
 -- #############################################################################################################
 --
+spool drop_sql_plan.log
+
 set feedback off
 set sqlblanklines on
 set serveroutput on
 set verify off
 set lines 160
-spool drop_sql_plan.log
 
 declare
 l_plan_name varchar2(40);

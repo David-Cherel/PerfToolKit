@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: acs_diagnosis.sql
 -- #############################################################################################################
@@ -26,6 +27,8 @@
 -- EXAMPLE : acs_diagnosis.sql cm1fyt76dwbkb 0
 -- #############################################################################################################
 --
+spool acs_diagnosis.log
+
 set pages 9999
 set lines 240
 set long 1000000
@@ -54,7 +57,6 @@ begin
 end;
 /
 
-spool acs_diagnosis.log
 
 prompt
 prompt =====================================================================================================
@@ -203,6 +205,6 @@ prompt 2) If many child cursors exist, check V$SQL_SHARED_CURSOR for BIND_MISMAT
 prompt 3) Correlate V$SQL_BIND_CAPTURE values with V$SQL_CS_* selectivity buckets.
 prompt 4) If bind skew is real, evaluate histogram strategy (prefer pending stats test first).
 
-spool off
 
+spool off
 exit;

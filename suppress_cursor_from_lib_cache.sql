@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: suppress_cursor_from_lib_cache.sql
 -- #############################################################################################################
@@ -22,6 +23,8 @@
 -- EXAMPLE : suppress_cursor_from_lib_cache.sql cm1fyt76dwbkb
 -- #############################################################################################################
 --
+spool suppress_cursor_from_lib_cache.log
+
 set feedback off
 set sqlblanklines on
 set serveroutput on
@@ -60,4 +63,5 @@ undef l_sql_id
 undef l_string
 
 
+spool off
 exit;

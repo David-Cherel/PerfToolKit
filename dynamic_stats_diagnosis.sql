@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: dynamic_stats_diagnosis.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : dynamic_stats_diagnosis.sql cm1fyt76dwbkb 0
 -- #############################################################################################################
 --
+spool dynamic_stats_diagnosis.log
+
 set pages 9999
 set lines 260
 set long 1000000
@@ -56,7 +59,6 @@ begin
 end;
 /
 
-spool dynamic_stats_diagnosis.log
 
 prompt
 prompt =====================================================================================================
@@ -191,6 +193,6 @@ prompt 1) If note shows dynamic statistics but no active session is found, curso
 prompt 2) SESSION optimizer_dynamic_sampling can differ from level reported in note (internal escalation is possible).
 prompt 3) Re-run on an actively executing session for freshest session correlation.
 
-spool off
 
+spool off
 exit;

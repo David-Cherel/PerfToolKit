@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: cardinality_misestimate_diagnosis.sql
 -- #############################################################################################################
@@ -28,6 +29,8 @@
 -- EXAMPLE : cardinality_misestimate_diagnosis.sql cm1fyt76dwbkb 0 YES
 -- #############################################################################################################
 --
+
+spool cardinality_misestimate_diagnosis.log
 
 set pages 9999
 set lines 280
@@ -105,7 +108,6 @@ select case
        end as rt_stats_available
 from dual;
 
-spool cardinality_misestimate_diagnosis.log
 
 prompt
 prompt =========================================================================================================
@@ -770,6 +772,6 @@ begin
 end;
 /
 
-spool off
 
+spool off
 exit;

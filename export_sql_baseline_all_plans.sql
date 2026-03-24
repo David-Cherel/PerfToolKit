@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: export_sql_baseline_all_plans.sql
 -- #############################################################################################################
@@ -29,12 +30,13 @@
 -- EXAMPLE : export_sql_baseline_all_plans.sql SQL_auy3f51688974 STAGING_PERF OLAP USERS exp_perftool.dmp
 -- #############################################################################################################
 --
+spool export_sql_baseline_all_plans.log
+
 set feedback off
 set sqlblanklines on
 set serveroutput on
 set verify off
 set lines 160
-spool export_sql_baseline.log
 declare
 
 

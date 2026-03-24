@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: create_sql_baseline_cursor_cache.sql
 -- #############################################################################################################
@@ -29,6 +30,8 @@
 -- EXAMPLE : create_sql_baseline_cursor_cache.sql cm1fyt76dwbkb 2481688974 YES YES
 -- #############################################################################################################
 --
+
+spool create_sql_baseline_cursor_cache.log
 
 set feedback off
 set sqlblanklines on
@@ -94,4 +97,5 @@ undef plan_hash_value
 undef plan_name
 undef fixed
 
+spool off
 exit;

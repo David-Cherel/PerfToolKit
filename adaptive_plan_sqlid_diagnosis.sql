@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: adaptive_plan_sqlid_diagnosis.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : adaptive_plan_sqlid_diagnosis.sql 4r3harjun4dvz 0
 -- #############################################################################################################
 --
+spool adaptive_plan_sqlid_diagnosis.log
+
 set pages 9999
 set lines 260
 set long 1000000
@@ -66,7 +69,6 @@ select case
        end as chosen_child
 from dual;
 
-spool adaptive_plan_sqlid_diagnosis.log
 
 prompt
 prompt =====================================================================================================
@@ -239,6 +241,6 @@ prompt 1) Focus first on rows under STATISTICS COLLECTOR with high A/E ratio and
 prompt 2) If suspect is an index access predicate, check histogram/column group stats on predicate columns.
 prompt 3) In DBMS_XPLAN adaptive output, rows with '-' were inactive (initial branch not chosen).
 
-spool off
 
+spool off
 exit;

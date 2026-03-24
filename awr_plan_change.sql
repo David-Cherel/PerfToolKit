@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: awr_plan_change.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : awr_plan_change.sql cm1fyt76dwbkb
 -- #############################################################################################################
 --
+spool awr_plan_change.log
+
 set pages 9999
 set lines 220
 set verify off
@@ -61,7 +64,6 @@ col min_avg_etime for 999,999.99999
 col max_avg_etime for 999,999.99999
 col etime_spread_pct for 999,990.99
 
-spool awr_plan_change.log
 
 
 PROMPT ******************************************************************
@@ -136,6 +138,6 @@ and sn.instance_number = sq.instance_number
 and sq.instance_number = ss.instance_number
 order by 1, 2, 3;
 
-spool off
 
+spool off
 exit;

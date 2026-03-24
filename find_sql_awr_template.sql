@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: find_sql_awr_template.sql
 -- #############################################################################################################
@@ -24,6 +25,8 @@
 -- EXAMPLE : find_sql_awr_template.sql "from orders where customer_id"
 -- #############################################################################################################
 --
+spool find_sql_awr_template.log
+
 set pages 9999
 set long 32000
 set lines 220
@@ -75,3 +78,5 @@ order by avg_etime desc, s.instance_number, s.sql_id, s.plan_hash_value
 
 prompt
 prompt NOTE: Rows are sorted by AVG_ETIME DESC to identify high-cost historical candidates first.
+
+spool off

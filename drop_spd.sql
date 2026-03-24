@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: drop_spd.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : drop_spd.sql MYUSER OBJECT1
 -- #############################################################################################################
 --
+spool drop_spd.log
+
 set pages 9999
 set lines 180
 
@@ -45,6 +48,8 @@ BEGIN
     OPEN c_directives;
     LOOP
         FETCH c_directives INTO v_directive_id;
+
+spool off
         EXIT WHEN c_directives%NOTFOUND;
 
         DBMS_SPD.DROP_SQL_PLAN_DIRECTIVE(directive_id => v_directive_id);

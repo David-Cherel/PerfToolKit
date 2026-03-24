@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: spd_sqlid_diagnosis.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : spd_sqlid_diagnosis.sql cm1fyt76dwbkb 0
 -- #############################################################################################################
 --
+spool spd_sqlid_diagnosis.log
+
 set pages 9999
 set lines 260
 set verify off
@@ -51,7 +54,6 @@ begin
 end;
 /
 
-spool spd_sqlid_diagnosis.log
 
 prompt
 prompt =====================================================================================================
@@ -264,6 +266,6 @@ prompt 1) If directives are USABLE and REASON mentions missing stats/skew, revie
 prompt 2) If directives are SUPERSEDED, verify whether newer stats (histogram/extended stats) now cover the case.
 prompt 3) Check plan note for "Sql Plan Directive used for this statement" in DBMS_XPLAN +NOTE.
 
-spool off
 
+spool off
 exit;

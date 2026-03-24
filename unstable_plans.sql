@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: unstable_plans.sql
 -- #############################################################################################################
@@ -24,6 +25,8 @@
 -- EXAMPLE : unstable_plans.sql 2 0.1
 -- #############################################################################################################
 --
+spool unstable_plans.log
+
 set pages 9999
 set lines 180
 set verify off
@@ -52,7 +55,6 @@ prompt =========================================================================
 prompt AWR unstable plans analysis (min_stddev=&&min_stddev, min_etime=&&min_etime)
 prompt =====================================================================================================
 
-spool unstable_plans.log
 
 col execs for 999,999,999
 col min_etime for 999,999.99
@@ -98,6 +100,6 @@ order by norm_stddev desc
 prompt
 prompt NOTE: Higher NORM_STDDEV and ETIME_SPREAD_PCT indicate stronger instability.
 
-spool off
 
+spool off
 exit

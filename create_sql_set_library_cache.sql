@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: create_sql_set_library_cache.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : create_sql_set_library_cache.sql MY_SQLSET_LIBCACHE
 -- #############################################################################################################
 --
+
+spool create_sql_set_library_cache.log
 
 set feedback off
 set sqlblanklines on
@@ -86,4 +89,5 @@ END;
 undef cur
 undef sql_set_name
 
+spool off
 exit;

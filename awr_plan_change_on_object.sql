@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: awr_plan_change_on_object.sql
 -- #############################################################################################################
@@ -24,6 +25,8 @@
 -- EXAMPLE : awr_plan_change_on_object.sql S_LOY_TXN
 -- #############################################################################################################
 --
+spool awr_plan_change_on_object.log
+
 set pages 9999
 set lines 220
 set verify off
@@ -58,7 +61,6 @@ col min_avg_etime for 999,999.99999
 col max_avg_etime for 999,999.99999
 col etime_spread_pct for 999,990.99
 
-spool awr_plan_change_on_object.log
 
 prompt
 prompt =====================================================================================================
@@ -119,6 +121,6 @@ from base
 group by sql_id, plan_hash_value
 order by sql_id, plan_hash_value;
 
-spool off
 
+spool off
 exit;

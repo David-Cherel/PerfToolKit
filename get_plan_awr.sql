@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: get_plan_awr.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : get_plan_awr.sql cm1fyt76dwbkb 2481688974
 -- #############################################################################################################
 --
+spool get_plan_awr.log
+
 set pages 9999
 set lines 220
 set long 1000000
@@ -53,7 +56,6 @@ begin
 end;
 /
 
-spool get_plan_awr.log
 
 prompt
 prompt =====================================================================================================
@@ -106,6 +108,6 @@ prompt 1) If several plans exist, re-run with a specific PLAN_HASH_VALUE to focu
 prompt 2) Compare with @get_plan.sql <SQL_ID> to check current cache plan vs historical AWR plans.
 prompt 3) If regression is confirmed, evaluate SQL Baseline/SQL Patch workflows.
 
-spool off
 
+spool off
 exit

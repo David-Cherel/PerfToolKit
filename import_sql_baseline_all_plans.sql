@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: import_sql_baseline_all_plans.sql
 -- #############################################################################################################
@@ -25,12 +26,13 @@
 -- EXAMPLE : import_sql_baseline_all_plans.sql exp_perftool.dmp OLAP
 -- #############################################################################################################
 --
+spool import_sql_baseline_all_plans.log
+
 set feedback off
 set sqlblanklines on
 set serveroutput on
 set verify off
 set lines 160
-spool import_sql_baseline.log
 declare
 
 

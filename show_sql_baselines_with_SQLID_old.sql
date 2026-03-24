@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: show_sql_baselines_with_SQLID_old.sql
 -- #############################################################################################################
@@ -23,6 +24,8 @@
 -- EXAMPLE : show_sql_baselines_with_SQLID_old.sql SQLID_cm1fyt76dwbkb_2481688974
 -- #############################################################################################################
 --
+spool show_sql_baselines_with_SQLID_old.log
+
 set lines 160
 set pages 999
 col sql_text for a100 trunc
@@ -43,5 +46,5 @@ where spb.signature = so.signature
 and spb.plan_name = so.name
 and spb.plan_name like nvl('&plan_name',spb.plan_name);
 
+spool off
 exit;
-

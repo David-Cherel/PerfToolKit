@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: find_spd.sql
 -- #############################################################################################################
@@ -24,6 +25,8 @@
 -- EXAMPLE : find_spd.sql MYUSER
 -- #############################################################################################################
 --
+spool find_spd.log
+
 set pages 9999
 set lines 220
 set verify off
@@ -41,7 +44,6 @@ prompt =========================================================================
 prompt Listing SQL Plan Directives for schema: &&schema
 prompt =====================================================================================================
 
-spool find_spd.log
 
 column dir_id       format a20
 column owner        format a15
@@ -82,6 +84,6 @@ from   dba_sql_plan_directives d
          on d.directive_id = o.directive_id
 where  o.owner = upper('&&schema');
 
-spool off
 
+spool off
 exit;

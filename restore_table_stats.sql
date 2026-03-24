@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: restore_table_stats.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : restore_table_stats.sql SYS MYTAB1 06/02/2025-17-10-32
 -- #############################################################################################################
 --
+spool restore_table_stats.log
+
 set echo off feed off
 set serveroutput on size 1000000
 set sqlblanklines on
@@ -49,4 +52,5 @@ execute dbms_stats.restore_table_stats(upper('&ownname'),upper('&tabname'),to_da
 
 
 
+spool off
 exit;

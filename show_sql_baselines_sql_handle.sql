@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: show_sql_baselines_sql_handle.sql
 -- #############################################################################################################
@@ -28,6 +29,8 @@
 -- #############################################################################################################
 --
 
+spool show_sql_baselines_sql_handle.log
+
 set lines 160
 set pages 999
 col sql_text for a100 trunc
@@ -48,5 +51,5 @@ where spb.signature = so.signature
 and spb.plan_name = so.name
 and spb.sql_handle like nvl('&sql_handle',spb.sql_handle);
 
+spool off
 exit;
-

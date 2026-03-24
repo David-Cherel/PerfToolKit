@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: show_sql_patches.sql
 -- #############################################################################################################
@@ -27,12 +28,13 @@
 -- #############################################################################################################
 --
 
+spool show_sql_patches.log
+
 set lines 160
 col sql_text for a50
 col created for a28
 col last_modified for a16
 
-spool show_sql_patches.log 
 
 select sqp.name,
 dbms_lob.substr(sql_text,3999,1) sql_text,
@@ -43,4 +45,3 @@ from dba_sql_patches sqp;
 
 spool off
 exit;
-

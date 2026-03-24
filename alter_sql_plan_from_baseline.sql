@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: alter_sql_plan_from_baseline.sql
 -- #############################################################################################################
@@ -26,6 +27,8 @@
 -- EXAMPLE : alter_sql_plan_from_baseline.sql SQL_46ada9aadcbb946e SQLID_auy3f5g7da1_2481688974 YES YES
 -- #############################################################################################################
 --
+spool alter_sql_plan_from_baseline.log
+
 set serveroutput on
 set sqlblanklines on
 set feedback off
@@ -69,4 +72,5 @@ end;
 /
 
 
+spool off
 exit;

@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: find_matching_signature_statspack.sql
 -- #############################################################################################################
@@ -23,10 +24,11 @@
 -- EXAMPLE : find_matching_signature_statspack.sql cm1fyt76dwbkb
 -- #############################################################################################################
 --
+spool find_matching_signature_statspack.log
+
 set lines 180
 set pages 999
 define sql_id ='&1'
-spool find_matching_signature_statspack.log
 
 
 
@@ -44,6 +46,6 @@ and (sum1.EXACT_MATCHING_SIGNATURE=sum2.EXACT_MATCHING_SIGNATURE or sum1.FORCE_M
 and sum2.SQL_ID='&sql_id';
 
 
-spool off
 
+spool off
 exit;

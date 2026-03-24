@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: add_sql_plan_to_baseline_cursor_cache.sql
 -- #############################################################################################################
@@ -26,6 +27,8 @@
 -- EXAMPLE : add_sql_plan_to_baseline_cursor_cache.sql cm1fyt76dwbkb 2481688974 SQL_46ada9aadcbb946e
 -- #############################################################################################################
 --
+spool add_sql_plan_to_baseline_cursor_cache.log
+
 set feedback off
 set sqlblanklines on
 set serveroutput on
@@ -87,4 +90,5 @@ undef plan_hash_value
 undef plan_name
 
 
+spool off
 exit;

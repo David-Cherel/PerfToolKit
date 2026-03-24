@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: find_sql_statspack_template.sql
 -- #############################################################################################################
@@ -23,6 +24,8 @@
 -- EXAMPLE : find_sql_statspack_template.sql "from orders where customer_id"
 -- #############################################################################################################
 --
+spool find_sql_statspack_template.log
+
 set lines 180
 col INSTANCE_NUMBER for 99999
 col exact_matching_signature format 999999999999999999999999 
@@ -36,6 +39,5 @@ and summary.SQL_ID=sqpu.SQL_ID
 and upper(sqltext.SQL_TEXT) like upper('%'||'&mysqltext'||'%')
 and sqltext.SQL_TEXT not like '%/* PTK */%';
 
+spool off
 exit;
-
-

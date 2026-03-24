@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: unlock_table_stats.sql
 -- #############################################################################################################
@@ -23,6 +24,8 @@
 -- EXAMPLE : unlock_table_stats.sql SYS MYTAB1
 -- #############################################################################################################
 --
+spool unlock_table_stats.log
+
 set echo off feed off
 set serveroutput on size 1000000
 set sqlblanklines on
@@ -60,4 +63,5 @@ else 'UNLOCKED'
 END LOCK_STATUS
 from dba_tab_statistics where table_name=upper('&tabname') and owner=upper('&ownname'); 
 
+spool off
 exit;

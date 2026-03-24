@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 --
 -- File name:   whats_changed.sql
@@ -48,6 +49,8 @@
 -- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
+spool whats_changed.log
+
 set pages 9999
 set lines 180
 set verify off
@@ -80,7 +83,6 @@ prompt =========================================================================
 prompt AWR before/after change analysis (days_ago=&&days_ago, min_stddev=&&min_stddev, min_etime=&&min_etime)
 prompt =====================================================================================================
 
-spool whats_changed.log
 
 col execs for 999,999,999
 col before_etime for 999,990.99
@@ -166,7 +168,7 @@ order by norm_stddev
 prompt
 prompt NOTE: RESULT=Slower means average elapsed time increased after reference date.
 
+
+
 spool off
-
-
 exit

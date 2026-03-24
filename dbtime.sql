@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: dbtime.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : dbtime.sql 1 20976 20978
 -- #############################################################################################################
 --
+spool dbtime.log
+
 set serveroutput on
 set sqlblanklines on
 set feedback on
@@ -40,7 +43,6 @@ whenever sqlerror exit failure rollback
 col dbtime for 999,999.99
 col begin_timestamp for a40
 
-spool dbtime.log
 
 
 define instance_num = '&1'
@@ -128,6 +130,8 @@ BEGIN
     OPEN c_snap_stats;
     LOOP
         FETCH c_snap_stats INTO v_begin_snap, v_end_snap, v_timestamp, v_inst, v_dbtime_min;
+
+spool off
         EXIT WHEN c_snap_stats%NOTFOUND;
         DBMS_OUTPUT.PUT_LINE(
             'Begin Snap: ' || v_begin_snap ||
@@ -172,7 +176,6 @@ prompt NOTE: Output lists the top 10 intervals by DB Time (minutes).
 
 
 
-spool off
 
 
 exit;

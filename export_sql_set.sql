@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: export_sql_set.sql
 -- #############################################################################################################
@@ -29,12 +30,13 @@
 -- EXAMPLE : export_sql_set.sql MY_SQL_SET1 STAGING_PERF OLAP USERS exp_perftool.dmp
 -- #############################################################################################################
 --
+spool export_sql_set.log
+
 set feedback off
 set sqlblanklines on
 set serveroutput on
 set verify off
 set lines 160
-spool export_sql_baseline.log
 declare
 
 

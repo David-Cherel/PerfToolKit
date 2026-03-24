@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: find_sql_template.sql
 -- #############################################################################################################
@@ -24,6 +25,8 @@
 -- EXAMPLE : find_sql_template.sql skew
 -- #############################################################################################################
 --
+
+spool find_sql_template.log
 
 set pages 9999
 set lines 220
@@ -78,3 +81,5 @@ order by avg_etime_ms desc, sql_id, child_number;
 
 prompt
 prompt NOTE: Rows are sorted by AVG_ETIME DESC to surface expensive candidates first.
+
+spool off

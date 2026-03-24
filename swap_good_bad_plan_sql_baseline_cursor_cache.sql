@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: swap_good_bad_plan_sql_baseline_cursor_cache.sql
 -- #############################################################################################################
@@ -26,6 +27,7 @@
 -- EXAMPLE : swap_good_bad_plan_sql_baseline_cursor_cache.sql 4x6hkyd6r1d08 3284627250 8j3jyx070mvhd 2068817167
 -- #############################################################################################################
 --
+
 spool swap_good_bad_plan_sql_baseline_cursor_cache.log
 
 set feedback off
@@ -149,7 +151,7 @@ undef plan_hash_value
 undef plan_name
 undef fixed
 
-spool off;
 
 
+spool off
 exit;

@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: histogram_pending_stats_advisor.sql
 -- #############################################################################################################
@@ -28,6 +29,8 @@
 -- EXAMPLE : histogram_pending_stats_advisor.sql SH SALES AMOUNT_SOLD YES
 -- #############################################################################################################
 --
+spool histogram_pending_stats_advisor.log
+
 set pages 9999
 set lines 220
 set verify off
@@ -56,7 +59,6 @@ begin
 end;
 /
 
-spool histogram_pending_stats_advisor.log
 
 prompt
 prompt =====================================================================================================
@@ -220,6 +222,6 @@ prompt NOTE:
 prompt - SYS.COL_USAGE$ is an internal table; query it read-only and prefer DBA_* views for supportability.
 prompt - Gather pending stats in test windows first, then publish only after validation.
 
-spool off
 
+spool off
 exit;

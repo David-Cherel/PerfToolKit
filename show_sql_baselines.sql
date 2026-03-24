@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: show_sql_baselines.sql
 -- #############################################################################################################
@@ -28,6 +29,8 @@
 -- #############################################################################################################
 --
 
+spool show_sql_baselines.log
+
 set lines 155
 col sql_text for a35 trunc
 col last_executed for a28
@@ -43,5 +46,4 @@ dba_sql_plan_baselines spb, sqlobj$ so
 where spb.signature = so.signature
 and spb.plan_name = so.name;
 
-
-
+spool off

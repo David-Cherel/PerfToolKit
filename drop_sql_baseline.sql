@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: drop_sql_baseline.sql
 -- #############################################################################################################
@@ -24,12 +25,13 @@
 -- EXAMPLE : drop_sql_baseline.sql SQL_auy3f5g7da1ed45g
 -- #############################################################################################################
 --
+spool drop_sql_baseline.log
+
 set feedback off
 set sqlblanklines on
 set serveroutput on
 set verify off
 set lines 160
-spool drop_sql_plan.log
 
 declare
 l_sql_handle varchar2(40);

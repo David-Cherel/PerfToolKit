@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: find_sql_in_sql_set.sql
 -- #############################################################################################################
@@ -24,6 +25,8 @@
 -- EXAMPLE : find_sql_in_sql_set.sql MY_SQL_SET1 ze5tf2gk8vc4
 -- #############################################################################################################
 --
+spool find_sql_in_sql_set.log
+
 set feedback off
 set sqlblanklines on
 set verify off
@@ -42,4 +45,5 @@ from TABLE(DBMS_SQLTUNE.select_sqlset ('&&sql_set_name')) where SQL_ID='&&sql_id
 
 
 
+spool off
 exit;

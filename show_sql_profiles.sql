@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: show_sql_profiles.sql
 -- #############################################################################################################
@@ -29,6 +30,8 @@
 -- #############################################################################################################
 --
 
+spool show_sql_profiles.log
+
 set pages 9999
 set lines 220
 set long 1000000
@@ -43,7 +46,6 @@ whenever sqlerror exit failure rollback
 
 define profile_name ='&1'
 
-spool show_sql_profiles.log
 
 prompt
 prompt =====================================================================================================
@@ -80,6 +82,6 @@ from   dba_sql_profiles
 where  nullif('&&profile_name','') is null
    or  name = '&&profile_name';
 
-spool off
 
+spool off
 exit;

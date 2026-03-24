@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: create_sql_baseline_awr.sql
 -- #############################################################################################################
@@ -29,6 +30,8 @@
 -- EXAMPLE : create_sql_baseline_awr.sql cm1fyt76dwbkb 2481688974 YES YES
 -- #############################################################################################################
 --
+
+spool create_sql_baseline_awr.log
 
 set serveroutput on
 set sqlblanklines on
@@ -121,4 +124,5 @@ undef fixed
 undef enabled
 undef plan_name
 
+spool off
 exit;

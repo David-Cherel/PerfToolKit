@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: dbtime.old.sql
 -- #############################################################################################################
@@ -25,11 +26,12 @@
 -- EXAMPLE : dbtime.old.sql 1 20976 20978
 -- #############################################################################################################
 --
+spool dbtime.old.log
+
 set lines 155
 col dbtime for 999,999.99
 col begin_timestamp for a40
 
-spool dbtime.log
 
 COLUMN myminid NEW_VALUE v_myminid
 COLUMN mymaxid NEW_VALUE v_mymaxid
@@ -62,5 +64,6 @@ where  begin_snap between nvl('&begin_snap_id',&v_myminid) and nvl('&end_snap_id
 and begin_snap=end_snap-1
 order by dbtime desc
 ) where rownum < 10;
+
 spool off
 exit;

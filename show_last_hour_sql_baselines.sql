@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: show_last_hour_sql_baselines.sql
 -- #############################################################################################################
@@ -23,6 +24,8 @@
 -- EXAMPLE : show_last_hour_sql_baselines.sql
 -- #############################################################################################################
 --
+spool show_last_hour_sql_baselines.log
+
 set lines 160
 set pages 999
 col sql_text for a100 trunc
@@ -42,5 +45,5 @@ where spb.signature = so.signature
 and spb.plan_name = so.name
 and spb.created > sysdate-(1/24);
 
+spool off
 exit;
-

@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: export_all_sql_baselines.sql
 -- #############################################################################################################
@@ -29,12 +30,13 @@
 -- EXAMPLE : export_all_sql_baselines.sql ALL STAGING OLAP USERS DUMPFILE001
 -- #############################################################################################################
 --
+spool export_all_sql_baselines.log
+
 set feedback off
 set sqlblanklines on
 set serveroutput on
 set verify off
 set lines 160
-spool export_sql_baseline.log
 declare
 
 

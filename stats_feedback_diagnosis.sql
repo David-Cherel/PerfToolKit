@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: stats_feedback_diagnosis.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- EXAMPLE : stats_feedback_diagnosis.sql cm1fyt76dwbkb 0
 -- #############################################################################################################
 --
+spool stats_feedback_diagnosis.log
+
 set pages 9999
 set lines 260
 set long 1000000
@@ -55,7 +58,6 @@ begin
 end;
 /
 
-spool stats_feedback_diagnosis.log
 
 prompt
 prompt =====================================================================================================
@@ -164,6 +166,6 @@ prompt 2) If OPT_ESTIMATE hints exist, feedback-based reoptimization was recorde
 prompt 3) Compare child cursors and plan_hash_value before/after subsequent execution.
 prompt 4) To disable globally (test with caution): _optimizer_use_feedback=FALSE.
 
-spool off
 
+spool off
 exit;

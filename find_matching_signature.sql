@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: find_matching_signature.sql
 -- #############################################################################################################
@@ -25,6 +26,8 @@
 -- #############################################################################################################
 --
 
+spool find_matching_signature.log
+
 set pages 9999
 set lines 220
 set verify off
@@ -48,7 +51,6 @@ end;
 /
 
 --For 19c
-spool find_matching_signature.log
 
 col sql_text format a100 
 col exact_matching_signature format 999999999999999999999999 
@@ -81,6 +83,6 @@ prompt
 prompt NOTE: Rows are sorted by AVG_ETIME DESC; focus first on expensive signature matches.
 
 
-spool off
 
+spool off
 exit;

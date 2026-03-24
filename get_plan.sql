@@ -1,3 +1,4 @@
+
 -- #############################################################################################################
 -- FILE: get_plan.sql
 -- #############################################################################################################
@@ -24,6 +25,8 @@
 -- EXAMPLE : get_plan.sql cm1fyt76dwbkb
 -- #############################################################################################################
 --
+spool get_plan.log
+
 set pages 9999
 set lines 220
 set long 1000000
@@ -48,7 +51,6 @@ begin
 end;
 /
 
-spool get_plan.log
 
 prompt
 prompt =====================================================================================================
@@ -97,7 +99,6 @@ prompt 1) If multiple child cursors exist, compare top children by AVG_ETIME_S a
 prompt 2) If A-Rows diverge heavily from E-Rows, investigate object/column stats and bind skew.
 prompt 3) If this SQL is aged out from cache, use @get_plan_awr.sql <SQL_ID> [PLAN_HASH_VALUE].
 
+
 spool off
-
 exit;
-
