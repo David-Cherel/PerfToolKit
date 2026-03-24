@@ -1,20 +1,30 @@
 -- #############################################################################################################
--- SQL Plan Directive diagnosis from SQL_ID
---
--- Purpose:
---   1) Verify hidden parameters related to SQL Plan Directive management/usage
---   2) Detect SQL Plan Directives potentially related to a SQL_ID
---      (V$SQL -> V$SQL_PLAN object references -> DBA_SQL_PLAN_DIR_OBJECTS / DBA_SQL_PLAN_DIRECTIVES)
---   3) If directives are found, display object/column statistics and extended statistics metadata
---
--- Usage:
---   @spd_sqlid_diagnosis.sql <SQL_ID> [CHILD_NUMBER]
---
--- Example:
---   @spd_sqlid_diagnosis.sql cm1fyt76dwbkb
---   @spd_sqlid_diagnosis.sql cm1fyt76dwbkb 0
+-- FILE: spd_sqlid_diagnosis.sql
 -- #############################################################################################################
-
+--
+-- PURPOSE:
+-- Diagnoses SQL Plan Directive relevance for a SQL_ID (optionally one child cursor), correlating plan objects with directives and showing related object/column statistics and extended stats metadata.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze for SQL Plan Directive correlation (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+-- &2 (child_no) - NUMBER - Optional child cursor number filter (e.g., 0).
+--
+-- OUTPUT DESCRIPTION:
+-- Multiple sections: directive-related hidden parameters, candidate directives linked through plan objects, object stats, column stats, and stat extension metadata for related tables; output spooled to spd_sqlid_diagnosis.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL Plan Directives are potentially related to this SQL_ID?
+-- What directive type/state/reason is associated with related objects/columns?
+-- Are related object and column statistics stale, missing, or potentially insufficient?
+-- Are extended statistics defined on directive-related tables?
+-- Which hidden parameters relevant to SQL Plan Directive usage are currently set?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : spd_sqlid_diagnosis.sql cm1fyt76dwbkb 0
+-- #############################################################################################################
+--
 set pages 9999
 set lines 260
 set verify off

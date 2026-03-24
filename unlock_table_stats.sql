@@ -1,13 +1,28 @@
--- UnLock table statistics 
--- 
--- ownname := &&1
--- tabname := &&2
--- execute dbms_stats.unlock_table_stats(ownname,tabname)
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : unlock_table_stats.sql SYS MYTAB1
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- #############################################################################################################
+-- FILE: unlock_table_stats.sql
+-- #############################################################################################################
+--
+-- PURPOSE:
+-- Unlocks optimizer statistics for a specified table using DBMS_STATS.UNLOCK_TABLE_STATS and verifies lock status from DBA_TAB_STATISTICS.
+--
+-- INPUT PARAMETERS:
+-- &1 (ownname) - STRING - Table owner/schema name (e.g., 'SYS').
+-- &2 (tabname) - STRING - Table name whose stats must be unlocked (e.g., 'MYTAB1').
+--
+-- OUTPUT DESCRIPTION:
+-- Executes table stats unlock operation and prints verification query showing owner, table name, and lock status (LOCKED/UNLOCKED).
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I unlock optimizer statistics for a specific table?
+-- Is the target table statistics lock status currently LOCKED or UNLOCKED?
+-- Did DBMS_STATS.UNLOCK_TABLE_STATS execute successfully for the requested table?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : unlock_table_stats.sql SYS MYTAB1
+-- #############################################################################################################
+--
 set echo off feed off
 set serveroutput on size 1000000
 set sqlblanklines on

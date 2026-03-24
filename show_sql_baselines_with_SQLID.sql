@@ -1,3 +1,33 @@
+-- #############################################################################################################
+-- FILE: show_sql_baselines_with_SQLID.sql
+-- #############################################################################################################
+--
+-- PURPOSE:
+-- Displays SQL Plan Baselines whose PLAN_NAME follows the SQLID naming pattern (SQLID_% ), showing baseline identifiers, SQL text excerpt, status flags, and last execution timestamp for SQLID-based baseline review.
+--
+-- INPUT PARAMETERS:
+-- None - N/A - This script uses a fixed internal filter (PLAN_NAME like 'SQLID_%').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set containing SQL_HANDLE, PLAN_NAME, SQL_TEXT (truncated), ENABLED, ACCEPTED, FIXED, and LAST_EXECUTED for baselines with plan names matching SQLID_%.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL Plan Baselines have plan names starting with SQLID_?
+-- What SQL handles correspond to SQLID-based baseline plan names?
+-- Which SQLID-based baselines are enabled?
+-- Which SQLID-based baselines are accepted?
+-- Which SQLID-based baselines are fixed?
+-- What SQL text is associated with each SQLID-based baseline?
+-- When was each SQLID-based baseline last executed?
+-- How many SQLID-based baseline entries currently exist?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : show_sql_baselines_with_SQLID.sql
+-- #############################################################################################################
+--
+
 set lines 160
 col sql_text for a35 trunc
 col last_executed for a28

@@ -1,8 +1,28 @@
--- ##########################################################
--- Show last hour SQL Baselines 
--- ##########################################################
-
-
+-- #############################################################################################################
+-- FILE: show_last_hour_sql_baselines.sql
+-- #############################################################################################################
+--
+-- PURPOSE:
+-- Displays SQL Plan Baselines created during the last hour, including SQL handle, plan name, SQL text, status flags, and verification/execution timestamps.
+--
+-- INPUT PARAMETERS:
+-- None - N/A - This script does not require SQL*Plus substitution parameters.
+--
+-- OUTPUT DESCRIPTION:
+-- One result set listing recently created baselines (last hour) with SQL text snippet, ENABLED/ACCEPTED/FIXED flags, last verified time, and last executed time.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL baselines were created in the last hour?
+-- What status flags (enabled/accepted/fixed) do recent baselines have?
+-- When were recent baselines last verified or executed?
+-- Which SQL text is associated with each newly created baseline?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : show_last_hour_sql_baselines.sql
+-- #############################################################################################################
+--
 set lines 160
 set pages 999
 col sql_text for a100 trunc

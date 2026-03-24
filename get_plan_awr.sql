@@ -1,13 +1,30 @@
 -- #############################################################################################################
--- Get execution plan from AWR with SQL_ID as input
--- Enhanced: validation, safer SQL*Plus runtime, contextual summary, actionable outputs
+-- FILE: get_plan_awr.sql
 -- #############################################################################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : get_plan_awr.sql cm1fyt76dwbkb 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+--
+-- PURPOSE:
+-- Retrieves execution plan details from AWR for a SQL_ID (optionally filtered by PLAN_HASH_VALUE), including historical performance summary and DBMS_XPLAN workload repository plan output.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze in AWR (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+-- &2 (plan_hash_value) - NUMBER - Optional plan hash value filter to focus on one historical plan (e.g., 2481688974).
+--
+-- OUTPUT DESCRIPTION:
+-- Two result sets: (1) AWR summary by PLAN_HASH_VALUE with snapshot range and execution/elapsed metrics; (2) DBMS_XPLAN.DISPLAY_WORKLOAD_REPOSITORY plan output with adaptive/outline/bind/note details. Output is spooled to get_plan_awr.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which historical plans exist in AWR for a given SQL_ID?
+-- What is the execution profile of each plan hash value in AWR?
+-- What plan details does DBMS_XPLAN show from AWR for this SQL_ID?
+-- How can I focus analysis on one specific plan hash value?
+-- How does historical AWR plan behavior compare across plans?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : get_plan_awr.sql cm1fyt76dwbkb 2481688974
+-- #############################################################################################################
+--
 set pages 9999
 set lines 220
 set long 1000000

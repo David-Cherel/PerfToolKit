@@ -1,16 +1,27 @@
--- ########################################
--- Suppress parent cursor from Library cache / cursor cache
--- ########################################
--- sql_id := &&1
-
+-- #############################################################################################################
+-- FILE: suppress_cursor_from_lib_cache.sql
+-- #############################################################################################################
 --
-
+-- PURPOSE:
+-- Purges a parent cursor from library cache for a given SQL_ID by deriving ADDRESS/HASH_VALUE and invoking DBMS_SHARED_POOL.PURGE.
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : suppress_cursor_from_lib_cache.sql cm1fyt76dwbkb
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID of the parent cursor to purge from library cache (e.g., 'cm1fyt76dwbkb').
+--
+-- OUTPUT DESCRIPTION:
+-- Resolves ADDRESS,HASH_VALUE from V$SQLAREA, executes DBMS_SHARED_POOL.PURGE with object type C, and prints purge command details via DBMS_OUTPUT.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I purge a parent cursor from library cache by SQL_ID?
+-- Which ADDRESS/HASH_VALUE pair is used for DBMS_SHARED_POOL.PURGE?
+-- Did the library cache purge command execute for the requested SQL_ID?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : suppress_cursor_from_lib_cache.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

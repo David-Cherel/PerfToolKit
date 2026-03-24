@@ -1,12 +1,29 @@
 -- #############################################################################################################
--- Find SQL Query in Statspack Reports and displays KPI's 
--- Accept a sql_id as inputs (prompted)
--- Display : inst_id, SQL_ID, plan_hash_value , EXECS ,	AVG_ETIME ,	AVG_LIO , avg_cpu_time
--- Allows to show performance KPI's for that SQL_ID and plan_hash_value 
+-- FILE: plan_change_statspack.sql
 -- #############################################################################################################
-
-
 --
+-- PURPOSE:
+-- Analyzes Statspack history for a SQL_ID to display performance metrics by instance and plan hash value, helping identify plan-related performance differences.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze in Statspack data (e.g., 'cm1fyt76dwbkb').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set with INSTANCE_NUMBER, SQL_ID, PLAN_HASH_VALUE, executions, average elapsed time, logical I/O, physical I/O, and CPU time aggregated from Statspack tables; output spooled to find_sql_with_sql_id_statspack.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which plan hash values exist for this SQL_ID in Statspack?
+-- How do elapsed time and I/O metrics compare across plans for this SQL_ID?
+-- Is there evidence of plan-related performance variation in Statspack?
+-- What is the execution volume per plan hash value for this SQL_ID?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : plan_change_statspack.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
+
 define sql_id ='&1'
 set lines 180
 

@@ -1,27 +1,30 @@
-----------------------------------------------------------------------------------------
+-- #############################################################################################################
+-- FILE: dbtime.sql
+-- #############################################################################################################
 --
--- File name:   dbtime.sql
--- Purpose:     Find busiest time periods in AWR.
--
--- Author:      Kerry Osborne
+-- PURPOSE:
+-- Reports top AWR snapshot intervals by DB Time with optional instance and snapshot-range filters, helping identify busiest periods for targeted performance investigation.
 --
--- Usage:       This scripts prompts for three values, all of which can be left blank.
+-- INPUT PARAMETERS:
+-- &1 (instance_num) - NUMBER - Optional RAC instance filter (e.g., 1).
+-- &2 (min_input) - NUMBER - Optional begin snapshot ID lower bound (e.g., 20976).
+-- &3 (max_input) - NUMBER - Optional end snapshot ID upper bound (e.g., 20978).
 --
---              instance_number: set to limit to a single instance in RAC environment
+-- OUTPUT DESCRIPTION:
+-- Prints DBMS_OUTPUT context (current DBID and snapshot bounds) and top 10 DB Time intervals with begin/end snapshot IDs, timestamps, instance number, and DB Time minutes; output is spooled to dbtime.log.
 --
---              begin_snap_id: set it you want to limit to a specific range, defaults to 0
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which AWR intervals have the highest DB Time?
+-- What are the busiest periods on a specific instance?
+-- How does DB Time distribute across a selected snapshot range?
+-- Which snapshot intervals should be prioritized for deeper tuning analysis?
+-- REM EMBEDDINGS END
 --
---              end_snap_id: set it you want to limit to a specific range, defaults to 99999999
+-- #############################################################################################################
+-- EXAMPLE : dbtime.sql 1 20976 20978
+-- #############################################################################################################
 --
---
----------------------------------------------------------------------------------------
-
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : dbtime.sql 1 20976 20978
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
 set serveroutput on
 set sqlblanklines on
 set feedback on

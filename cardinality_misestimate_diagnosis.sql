@@ -3,29 +3,31 @@
 -- #############################################################################################################
 --
 -- PURPOSE:
--- Diagnoses cardinality misestimates for a SQL_ID from cursor cache by comparing estimated versus actual rows, listing hotspot operations, correlating predicates and stats health, and optionally gathering pending statistics for validation.
+-- Diagnoses cardinality misestimates for a SQL_ID from cursor cache by comparing estimated versus actual rows, identifying hotspot operations, correlating predicates/statistics health, and optionally gathering pending statistics for validation.
 --
 -- INPUT PARAMETERS:
--- &1 (sql_id) - STRING - SQL_ID to analyze (13 alphanumeric characters)
--- &2 (child_no) - NUMBER - Optional child cursor number; if omitted, latest active child is selected
--- &3 (apply_pending) - STRING - Optional YES/Y or NO/N flag to gather pending stats on hotspot objects
+-- &1 (sql_id) - STRING - SQL_ID to analyze (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+-- &2 (child_no) - NUMBER - Optional child cursor number; if omitted, latest active child is selected.
+-- &3 (apply_pending) - STRING - Optional YES/Y or NO/N flag to gather pending stats on hotspot objects.
 --
 -- OUTPUT DESCRIPTION:
--- Multiple diagnostic result sections including selected cursor details, DBMS_XPLAN output, operation chronology, mismatch hotspots, predicate/column extraction, stats health checks, advisory commands, and pending stats visibility.
+-- Multiple diagnostic sections: cursor details, DBMS_XPLAN output, mismatch hotspots, predicate/object extraction, object/column stats health, advisory commands, optional pending stats gather, and pending stats visibility; output is spooled.
 --
 -- QUESTIONS ADDRESSED BY THIS SCRIPT:
 -- REM EMBEDDINGS BEG
--- Which plan operations for this SQL_ID show the largest estimated versus actual row mismatches?
--- Is real-time row-source statistics data available for the selected child cursor?
--- What are the execution profile metrics for the selected SQL child cursor?
--- Which predicates and objects are associated with cardinality hotspot operations?
--- Which implicated columns lack useful statistics or histograms?
--- Are table statistics stale or missing for impacted objects?
--- Are there existing extended statistics on impacted tables?
--- What DBMS_STATS commands are recommended to validate or improve estimates?
--- Were pending statistics gathered for hotspot objects when APPLY_PENDING is enabled?
--- Which pending statistics entries exist for implicated tables after analysis?
+-- Which plan operations show the largest estimated versus actual row mismatches?
+-- Are real-time row-source statistics available for the selected child cursor?
+-- Which predicates/objects are associated with cardinality hotspot operations?
+-- Which implicated columns lack usable stats or histograms?
+-- Are table or index stats stale/missing for impacted objects?
+-- Which DBMS_STATS commands are recommended to validate or improve estimates?
+-- Were pending statistics gathered and visible for implicated tables?
 -- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : cardinality_misestimate_diagnosis.sql cm1fyt76dwbkb 0 YES
+-- #############################################################################################################
+--
 
 set pages 9999
 set lines 280

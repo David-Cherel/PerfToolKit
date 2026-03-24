@@ -1,18 +1,32 @@
--- ################################################################################################
--- Create SQL Set from AWR reports 
--- It will take snapshot_id begin and end to capture all plans
--- there is no selection criteria except that it will exclude SYS, 
--- ORACLE_OCM and ORDSYS as a parsing schema. All plan will capture from AWR reports
--- ################################################################################################
--- SQL_Set_Name := &&1
--- begin_snap := &&2
--- end_snap := &&3
+-- #############################################################################################################
+-- FILE: create_sql_set_awr_snap.sql
+-- #############################################################################################################
 --
+-- PURPOSE:
+-- Creates a SQL Tuning Set from AWR snapshots within a specified snapshot range, excluding selected system schemas, and loads captured statements/plans for later analysis or baseline operations.
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : create_sql_set_awr_snap.sql my_sal_set 25698 25950
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+-- INPUT PARAMETERS:
+-- &1 (sql_set_name) - STRING - Name of the SQL Tuning Set to create.
+-- &2 (snapid_begin) - NUMBER - Optional begin snapshot ID; if null, minimum snapshot ID for current DBID is used.
+-- &3 (snapid_end) - NUMBER - Optional end snapshot ID; if null, maximum snapshot ID for current DBID is used.
+--
+-- OUTPUT DESCRIPTION:
+-- Creates and loads the SQL tuning set, prints DBMS_OUTPUT details (DBID, snapshot bounds, number of plans loaded), and exits after undefining SQL*Plus variables.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I create a SQL Tuning Set from AWR snapshot history?
+-- How can I capture SQL plans between two snapshot IDs into a SQL set?
+-- Can I default snapshot boundaries to min/max available snapshots?
+-- How can I exclude system schemas while loading SQL from AWR?
+-- How many plans were loaded into the created SQL set?
+-- What DBID and snapshot range were used during SQL set creation?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : create_sql_set_awr_snap.sql MY_SQLSET 20976 20978
+-- #############################################################################################################
+--
 
 set feedback off
 set sqlblanklines on

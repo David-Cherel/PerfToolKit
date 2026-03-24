@@ -1,11 +1,29 @@
 -- #############################################################################################################
--- Find SQL Query in AWR and displays KPI's 
--- Accept an extract of sql_text or SQL_ID as inputs
--- Display : sql_id, plan_hash_value, sql_text, avg_pio, avg_lio, avg_etime, execs, rows_proc
--- Allows to show performance KPI's for that SQL_ID and plan_hash_value 
+-- FILE: find_sql_awr_template.sql
 -- #############################################################################################################
-
-
+--
+-- PURPOSE:
+-- Searches AWR history for SQL statements containing an input SQL text extract and reports SQL_ID, plan hash value, and key performance metrics to identify costly historical statements.
+--
+-- INPUT PARAMETERS:
+-- &1 (sqltext) - STRING - SQL text extract used as search pattern in AWR SQL text (e.g., 'from orders where customer_id').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set of matching AWR SQL entries with instance number, SQL_ID, PLAN_HASH_VALUE, executions, average elapsed time, physical I/O, logical I/O, CPU time, and SQL text; sorted by AVG_ETIME descending.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which historical SQL statements in AWR contain a specific text extract?
+-- What SQL_IDs and plan hash values match the searched SQL text pattern?
+-- Which matching SQL statements are most expensive by average elapsed time?
+-- What are average I/O and CPU metrics for matching SQL statements?
+-- On which instance numbers were matching SQL statements observed?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : find_sql_awr_template.sql "from orders where customer_id"
+-- #############################################################################################################
+--
 set pages 9999
 set long 32000
 set lines 220

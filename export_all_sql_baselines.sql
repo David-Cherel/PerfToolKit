@@ -1,21 +1,34 @@
--- ##########################################################
--- export All SQL Plans from SQL baseline from SPM repository
--- ##########################################################
--- sql_handle := &&1
--- table_name := &&2
--- table_owner := &&3
--- tablespace := &&4
--- exp_file_name := &&5
-
-
+-- #############################################################################################################
+-- FILE: export_all_sql_baselines.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : export_sql_baseline_all_plans.sql ALL STAGING OLAP USERS DUMPFILE001 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
--- Logfile here : Directory DATA_PUMP_DIR/perftool_exp.log
--- Dumpfile here : Directory DATA_PUMP_DIR/&&5 (parameter 5)
-
+-- PURPOSE:
+-- Exports all SQL Plan Baselines by packing them into a staging table and exporting that table with Data Pump to a dump file in DATA_PUMP_DIR for transfer or later import.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_handle) - STRING - ALL for all SQL Baselines.
+-- &2 (table_name) - STRING - Staging table name used to pack baselines before export.
+-- &3 (table_owner) - STRING - Owner/schema of the staging table.
+-- &4 (tablespace) - STRING - Tablespace for staging table creation.
+-- &5 (exp_file_name) - STRING - Data Pump dump filename to generate in DATA_PUMP_DIR.
+--
+-- OUTPUT DESCRIPTION:
+-- Creates staging table, packs all baselines, runs Data Pump export of staging table, writes progress to DBMS_OUTPUT and export_sql_baseline.log, then drops staging table and reports dump/log locations.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I export all SQL Plan Baselines to a dump file?
+-- Which staging table is used to pack SQL baselines before export?
+-- Where is the generated dump file written?
+-- Where is the Data Pump export log file written?
+-- Did Data Pump export complete successfully?
+-- How can I clean up staging objects after baseline export?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : export_all_sql_baselines.sql ALL STAGING OLAP USERS DUMPFILE001
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

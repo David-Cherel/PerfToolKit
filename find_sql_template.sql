@@ -1,22 +1,28 @@
 -- #############################################################################################################
--- Find SQL Query in in Shared Pool (Library Cache) and displays KPI's 
--- Accept an extract of sql_text as inputs (ptompted)
--- Display : SQL_ID, CHILD, PLAN_HASH, EXECS, AVG_ETIME, AVG_LIO, SQL_TEXT
--- Allows to show performance KPI's for that SQL_ID and plan_hash_value 
+-- FILE: find_sql_template.sql
 -- #############################################################################################################
-
--- Find SQL ID from SQL Test:
--- 
--- SQL> @find_sql
--- Enter value for sql_text: %skew%
--- Enter value for sql_id:
--- SQL_ID 			CHILD 	PLAN_HASH 	EXECS 	AVG_ETIME 	AVG_LIO 		SQL_TEXT
--- ------------- 	------ 	---------- 	------ 	---------- 	------------ 	-------------------------------------------------
--- 0qa98gcnnza7h 	0 		568322376 	5 		13.09 		142,646 		select avg(pk_col) from kso.skew where col1 > 0
--- 0qa98gcnnza7h 	1 		3723858078 	1 		9.80 		2,626,102 		select avg(pk_col) from kso.skew where col1 > 0
--- 
 --
+-- PURPOSE:
+-- Searches SQL statements in library cache (V$SQL) using an input SQL text extract and reports SQL_ID, child cursor, plan hash, and key performance metrics to identify expensive candidates.
 --
+-- INPUT PARAMETERS:
+-- &1 (sql_text) - STRING - SQL text extract used as search pattern in V$SQL (e.g., 'skew').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set of matching library cache SQL with SQL_ID, child number, obsolete flag, last active time, force matching signature, plan hash, executions, average elapsed/CPU time, average I/O metrics, and SQL text.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL statements in library cache contain a given text extract?
+-- What SQL_ID, child cursors, and plan hash values match the searched SQL text?
+-- Which matching statements are most expensive by average elapsed time?
+-- What average logical/physical I/O and CPU metrics are observed per matching cursor?
+-- Are matching cursors obsolete or recently active?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : find_sql_template.sql skew
+-- #############################################################################################################
 --
 
 set pages 9999

@@ -1,9 +1,31 @@
 -- #############################################################################################################
--- Adaptive Cursor Sharing (ACS) diagnosis report (single-instance views only)
--- Usage:
---   @acs_diagnosis.sql <SQL_ID> [CHILD_NUMBER]
+-- FILE: acs_diagnosis.sql
 -- #############################################################################################################
-
+--
+-- PURPOSE:
+-- Produces an Adaptive Cursor Sharing diagnosis report for a SQL_ID (optionally one child cursor), combining parameter checks, cursor performance, split reasons, bind capture, and ACS selectivity/statistics/histogram views.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to diagnose for ACS behavior (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+-- &2 (child_no) - NUMBER - Optional child cursor number filter (e.g., 0).
+--
+-- OUTPUT DESCRIPTION:
+-- Multiple result sets covering ACS-related parameters, V$SQL/V$SQLAREA cursor metrics, V$SQL_SHARED_CURSOR reasons, V$SQL_BIND_CAPTURE values, and V$SQL_CS_* ACS views; output is spooled to acs_diagnosis.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Is this SQL_ID bind-sensitive and bind-aware?
+-- Which child cursors exist and how do their performance metrics differ?
+-- Why were additional child cursors created for this SQL_ID?
+-- What bind values were captured for each child cursor?
+-- What ACS selectivity buckets and runtime statistics are recorded?
+-- Are ACS-related hidden optimizer parameters enabled as expected?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : acs_diagnosis.sql cm1fyt76dwbkb 0
+-- #############################################################################################################
+--
 set pages 9999
 set lines 240
 set long 1000000

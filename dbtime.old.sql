@@ -1,28 +1,30 @@
-----------------------------------------------------------------------------------------
+-- #############################################################################################################
+-- FILE: dbtime.old.sql
+-- #############################################################################################################
 --
--- File name:   dbtime.sql
--- Purpose:     Find busiest time periods in AWR.
--
--- Author:      Kerry Osborne
+-- PURPOSE:
+-- Reports top AWR snapshot intervals by DB Time, with optional instance and snapshot-range filters, to identify busiest historical periods.
 --
--- Usage:       This scripts prompts for three values, all of which can be left blank.
+-- INPUT PARAMETERS:
+-- &1 (instance_number) - NUMBER - Optional RAC instance filter (e.g., 1).
+-- &2 (begin_snap_id) - NUMBER - Optional begin snapshot ID (e.g., 20976).
+-- &3 (end_snap_id) - NUMBER - Optional end snapshot ID (e.g., 20978).
 --
---              instance_number: set to limit to a single instance in RAC environment
+-- OUTPUT DESCRIPTION:
+-- One result set of top snapshot intervals ranked by DB Time (minutes), showing begin/end snapshot IDs, interval timestamp, and instance number; output is spooled to dbtime.log.
 --
---              begin_snap_id: set it you want to limit to a specific range, defaults to 0
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which AWR time intervals had the highest DB Time consumption?
+-- What are the busiest periods for a specific RAC instance?
+-- How does DB Time vary across a selected snapshot range?
+-- Which snapshot pair should be used for deeper SQL/AWR investigation?
+-- REM EMBEDDINGS END
 --
---              end_snap_id: set it you want to limit to a specific range, defaults to 99999999
+-- #############################################################################################################
+-- EXAMPLE : dbtime.old.sql 1 20976 20978
+-- #############################################################################################################
 --
---
----------------------------------------------------------------------------------------
-
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : dbtime.sql 1 20976 20978
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-
 set lines 155
 col dbtime for 999,999.99
 col begin_timestamp for a40

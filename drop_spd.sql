@@ -1,18 +1,30 @@
 -- #############################################################################################################
--- Drop SQL plan directives associated with a schema's objects
--- 
+-- FILE: drop_spd.sql
 -- #############################################################################################################
-
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : drop_spd.sql myuser object1
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
--- 
 --
+-- PURPOSE:
+-- Drops SQL Plan Directives linked to a specified schema object by scanning DBA_SQL_PLAN_DIR_OBJECTS, removing each directive via DBMS_SPD, then displaying remaining directives for the schema.
 --
+-- INPUT PARAMETERS:
+-- &1 (myschema) - STRING - Schema owner name containing the target object (e.g., 'MYUSER').
+-- &2 (myobject_name) - STRING - Object name associated with SQL plan directives to drop (e.g., 'OBJECT1').
 --
-
+-- OUTPUT DESCRIPTION:
+-- Performs directive deletion in PL/SQL and outputs a result set listing SQL plan directives remaining for the specified schema after the drop operation.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I drop SQL Plan Directives for a specific schema object?
+-- Which directive IDs are associated with an object before deletion?
+-- Can I remove all directives tied to one object in a single run?
+-- What SQL Plan Directives remain for the schema after deletion?
+-- Did DBMS_SPD.DROP_SQL_PLAN_DIRECTIVE complete without errors?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : drop_spd.sql MYUSER OBJECT1
+-- #############################################################################################################
+--
 set pages 9999
 set lines 180
 

@@ -1,11 +1,29 @@
 -- #############################################################################################################
--- Find other Matching Signature with a SQL_ID as input
+-- FILE: find_matching_signature.sql
 -- #############################################################################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : find_matching_signature.sql cm1fyt76dwbkb 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+--
+-- PURPOSE:
+-- Finds SQL statements sharing exact or force matching signatures with an input SQL_ID using V$SQL, and reports execution performance metrics to identify related expensive statements and potential cursor/literal variations.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze for exact/force matching signatures (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set listing matching SQL_ID/child cursors with signature values, plan hash, executions, average elapsed time, I/O and CPU metrics, last activity time, and SQL text; output spooled to find_matching_signature.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL statements share exact or force matching signatures with a given SQL_ID?
+-- What are the performance metrics of signature-related SQL statements?
+-- Which matching statements are the most expensive by average elapsed time?
+-- Are there multiple child cursors associated with related signatures?
+-- What plan hash values are used by signature-related SQL statements?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : find_matching_signature.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
 
 set pages 9999
 set lines 220

@@ -1,27 +1,30 @@
--- ##########################################################
--- import All SQL Plans from dump file (exported earlier)
--- ##########################################################
--- exp_file_name := &&1
--- table_owner := &&2
-
--- WARNING : This script imports the table from the Data Pump Dump file
--- WARNING : It will then assume that the last table created in the last minute is the Staging Table
--- WARNING : Only the table_owner is required to detect the table freshly imported
--- WARNING : "select object_name into l_table_name from dba_objects where owner=l_table_owner
--- WARNING : and object_type='TABLE' and created>sysdate-(2/24/60);"
--- WARNING : THEN THIS SCRIPT CANNOT BE USED IN PARALLEL OF OTHER TABLE DDL,  OR THIS SCRIPT
--- WARNING : COULD NOT BE USED BY OTHER SESSION IN PARALLEL
-
-
-
+-- #############################################################################################################
+-- FILE: import_sql_baseline_all_plans.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : import_sql_baseline_all_plans.sql exp_perftool.dmp OLAP
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
--- Logfile here : Directory DATA_PUMP_DIR/perftool_exp.log
--- Dumpfile here : Directory DATA_PUMP_DIR/&&1 (parameter 1)
-
+-- PURPOSE:
+-- Imports SQL Baseline staging data from a Data Pump dump file, identifies the freshly imported staging table, unpacks all baseline plans into SPM, then drops the staging table.
+--
+-- INPUT PARAMETERS:
+-- &1 (exp_file_name) - STRING - Data Pump dump filename to import from DATA_PUMP_DIR (e.g., 'exp_perftool.dmp').
+-- &2 (table_owner) - STRING - Schema owner used for imported staging table detection and unpack operations (e.g., 'OLAP').
+--
+-- OUTPUT DESCRIPTION:
+-- Executes Data Pump import job, prints operational progress and status messages, locates imported staging table, calls DBMS_SPM.UNPACK_STGTAB_BASELINE to load all plans, and drops staging table; output is spooled.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I import all SQL baseline plans from an exported dump file?
+-- Did the Data Pump import job complete successfully?
+-- Which staging table was detected and used for baseline unpack?
+-- Were SQL baseline plans loaded into SPM from the staging table?
+-- Was the temporary staging table cleaned up after import?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : import_sql_baseline_all_plans.sql exp_perftool.dmp OLAP
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

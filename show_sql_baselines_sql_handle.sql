@@ -1,12 +1,32 @@
--- ##########################################################
--- Show SQL Baselines (all plan) from SQL Handler input
--- ##########################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : show_sql_baselines_sql_handle.sql SQL_46ada9aadcbb946e  
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- #############################################################################################################
+-- FILE: show_sql_baselines_sql_handle.sql
+-- #############################################################################################################
+--
+-- PURPOSE:
+-- Displays SQL Plan Baselines filtered by an input SQL_HANDLE, showing baseline identity, SQL text excerpt, status flags, and verification/execution timestamps to review plans associated with one SQL handle.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_handle) - STRING - SQL Handle filter value (e.g., 'SQL_46ada9aadcbb946e').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set containing SQL_HANDLE, PLAN_NAME, SQL_TEXT (truncated), ENABLED, ACCEPTED, FIXED, LAST_VERIFIED, and LAST_EXECUTED for baselines matching the provided SQL handle.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL Plan Baselines exist for a specific SQL handle?
+-- What plan names are associated with the provided SQL handle?
+-- Which baselines for this SQL handle are enabled?
+-- Which baselines for this SQL handle are accepted?
+-- Which baselines for this SQL handle are fixed?
+-- What SQL text is associated with each baseline for this SQL handle?
+-- When was each baseline for this SQL handle last verified?
+-- When was each baseline for this SQL handle last executed?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : show_sql_baselines_sql_handle.sql SQL_46ada9aadcbb946e
+-- #############################################################################################################
+--
 
 set lines 160
 set pages 999

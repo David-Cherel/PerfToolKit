@@ -1,15 +1,31 @@
--- #################################################
--- Add SQL plan to SQL baseline from cursor cache
--- #################################################
--- sql_id := &&1
--- plan_hash_value := &&2
--- sql_handle := &&3
+-- #############################################################################################################
+-- FILE: add_sql_plan_to_baseline_cursor_cache.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : add_sql_plan_to_baseline_cursor_cache.sql cm1fyt76dwbkb 2481688974 SQL_46ada9aadcbb946e
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- PURPOSE:
+-- Adds a plan from cursor cache into an existing SQL baseline (SQL handle), then renames the newly loaded plan to SQLID_<SQL_ID>_<PLAN_HASH_VALUE> for easier baseline identification.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID whose cursor cache plan must be loaded (e.g., 'cm1fyt76dwbkb').
+-- &2 (plan_hash_value) - NUMBER - Plan hash value to load from cursor cache (e.g., 2481688974).
+-- &3 (sql_handle) - STRING - Target SQL baseline handle where the plan is added (e.g., 'SQL_46ada9aadcbb946e').
+--
+-- OUTPUT DESCRIPTION:
+-- Executes DBMS_SPM.LOAD_PLANS_FROM_CURSOR_CACHE and DBMS_SPM.ALTER_SQL_PLAN_BASELINE, prints return codes and created plan details via DBMS_OUTPUT.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I add a cursor cache plan into an existing SQL baseline handle?
+-- Did DBMS_SPM.LOAD_PLANS_FROM_CURSOR_CACHE load the requested SQL_ID/plan hash value?
+-- How can I rename the newly loaded baseline plan to SQLID_<SQL_ID>_<PLAN_HASH_VALUE>?
+-- Did DBMS_SPM.ALTER_SQL_PLAN_BASELINE succeed for the new plan?
+-- Which SQL handle and plan hash value were effectively registered in baseline repository?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : add_sql_plan_to_baseline_cursor_cache.sql cm1fyt76dwbkb 2481688974 SQL_46ada9aadcbb946e
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

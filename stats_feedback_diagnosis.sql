@@ -1,20 +1,30 @@
 -- #############################################################################################################
--- Statistics Feedback / Cardinality Feedback diagnosis
---
--- Purpose:
---   1) Display hidden parameter _optimizer_use_feedback
---   2) Probe if statistics/cardinality feedback is in play for a cursor from V$SQL
---   3) Display OPT_ESTIMATE reoptimization hints and related object clues
---   4) Analyze V$SQL_REOPTIMIZATION_HINTS and correlate with SQL_ID / child / plan
---
--- Usage:
---   @stats_feedback_diagnosis.sql <SQL_ID> [CHILD_NUMBER]
---
--- Examples:
---   @stats_feedback_diagnosis.sql cm1fyt76dwbkb
---   @stats_feedback_diagnosis.sql cm1fyt76dwbkb 0
+-- FILE: stats_feedback_diagnosis.sql
 -- #############################################################################################################
-
+--
+-- PURPOSE:
+-- Diagnoses statistics/cardinality feedback behavior for a SQL_ID (optionally child cursor), checking feedback parameter state, cursor reoptimization indicators, plan notes, and reoptimization hints.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to diagnose for feedback/reoptimization behavior (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+-- &2 (child_no) - NUMBER - Optional child cursor number filter (e.g., 0).
+--
+-- OUTPUT DESCRIPTION:
+-- Multiple sections: _optimizer_use_feedback parameter, V$SQL cursor indicators, DBMS_XPLAN note probe, OPT_ESTIMATE hints from V$SQL_REOPTIMIZATION_HINTS, and correlated hint/plan view; output spooled to stats_feedback_diagnosis.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Is optimizer feedback enabled in this environment?
+-- Is the cursor marked reoptimizable for this SQL_ID/child?
+-- Does plan note indicate cardinality/statistics feedback usage?
+-- Are OPT_ESTIMATE reoptimization hints present for this SQL_ID?
+-- How do reoptimization hints correlate with child cursors and plan hash values?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : stats_feedback_diagnosis.sql cm1fyt76dwbkb 0
+-- #############################################################################################################
+--
 set pages 9999
 set lines 260
 set long 1000000

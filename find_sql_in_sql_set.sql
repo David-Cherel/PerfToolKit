@@ -1,17 +1,29 @@
--- ################################################################################################
--- Find SQL and Plan_hash_value in a SQL Set  
--- It will show all plans if found in SQL Set
--- It accepts SQL_ID ans SQL Set name
--- ################################################################################################
--- SQL_Set_Name := &&1
--- SQL_ID := &&2
+-- #############################################################################################################
+-- FILE: find_sql_in_sql_set.sql
+-- #############################################################################################################
 --
+-- PURPOSE:
+-- Finds a specific SQL_ID inside a given SQL Tuning Set and lists associated plan hash values and execution metrics from DBMS_SQLTUNE.SELECT_SQLSET.
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : find_sql_in_sql_set.sql MySQL_Setl ze5tf2gk8vc4
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- INPUT PARAMETERS:
+-- &1 (sql_set_name) - STRING - SQL Tuning Set name to search (e.g., 'MY_SQL_SET1').
+-- &2 (sql_id) - STRING - SQL_ID to locate in the SQL set (e.g., 'ze5tf2gk8vc4').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set with SQL_ID, PLAN_HASH_VALUE, executions, elapsed_time, cpu_time, disk_reads, buffer_gets, and last_exec_start_time for matching rows in the selected SQL set.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Does a specific SQL_ID exist in a given SQL Tuning Set?
+-- Which plan hash values are stored for this SQL_ID in the SQL set?
+-- What execution and resource metrics are recorded for this SQL_ID in the SQL set?
+-- When was this SQL_ID last executed according to SQL set content?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : find_sql_in_sql_set.sql MY_SQL_SET1 ze5tf2gk8vc4
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set verify off

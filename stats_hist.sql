@@ -1,13 +1,28 @@
--- Showing tables statistics versions on all tables related to a SQL_ID  
--- 
--- sql_id := &&1
-
+-- #############################################################################################################
+-- FILE: stats_hist.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : stats_his.sql f3gyxvq104jgd
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- PURPOSE:
+-- Displays current and historical table statistics versions for objects referenced by a SQL_ID, combining cursor/AWR object references and optimizer stats history metadata.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID used to identify related objects and fetch their current/history stats versions (e.g., 'f3gyxvq104jgd').
+--
+-- OUTPUT DESCRIPTION:
+-- One consolidated result set showing table stats versions (CURRENT and HISTORY) with save/analyze times, row counts, sample sizes, sample percentage, block counts, and average row length for SQL-related tables.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- What current table statistics exist for objects used by this SQL_ID?
+-- What historical table statistics versions are available for these objects?
+-- How did row counts, sample sizes, and block counts evolve across stats versions?
+-- Which table stats history snapshots are closest to observed SQL performance changes?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : stats_hist.sql f3gyxvq104jgd
+-- #############################################################################################################
+--
 set echo off feed off
 set serveroutput on size 1000000
 set sqlblanklines on

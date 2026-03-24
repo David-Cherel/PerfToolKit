@@ -1,12 +1,30 @@
--- Retrieve statistics information for a table within a schema
--- 
--- ownname := &&1
--- tabname := &&2
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : table_stats_complete.sql SYS MYTAB1 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- #############################################################################################################
+-- FILE: table_stats_complete.sql
+-- #############################################################################################################
+--
+-- PURPOSE:
+-- Produces a comprehensive table statistics report for a specified owner/table, including structure, current stats, history diff, partition/index details, and column-level statistics/histograms support data.
+--
+-- INPUT PARAMETERS:
+-- &1 (ownname) - STRING - Table owner/schema name (e.g., 'SYS').
+-- &2 (tabname) - STRING - Table name to analyze (e.g., 'MYTAB1').
+--
+-- OUTPUT DESCRIPTION:
+-- Multi-section DBMS_OUTPUT/SQL report showing table definition, stats diff vs history, table/partition/column/index statistics, and index column expressions for the target table.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- What are the current optimizer statistics for the target table?
+-- How do current table stats differ from historical stats (e.g., yesterday)?
+-- What partition-level statistics exist for this table?
+-- What column statistics and bucket/sample details are available?
+-- Which indexes and index-column definitions are associated with this table?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : table_stats_complete.sql SYS MYTAB1
+-- #############################################################################################################
+--
 set echo off feed off
 set serveroutput on size 1000000
 

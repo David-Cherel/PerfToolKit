@@ -1,18 +1,31 @@
--- #################################################
--- Alter SQL plan from SQL baseline 
--- #################################################
--- sql_handle := &&1
--- plan_name := &&2
--- fixed := &&3
--- enabled := &&4
+-- #############################################################################################################
+-- FILE: alter_sql_plan_from_baseline.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : alter_sql_plan_from_baseline.sql SQL_46ada9aadcbb946e SQLID_auy3f5g7da1_2481688974 YES YES
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-
-
+-- PURPOSE:
+-- Alters attributes of an existing SQL Plan Baseline plan (FIXED and ENABLED flags) for a specified SQL handle and plan name using DBMS_SPM.ALTER_SQL_PLAN_BASELINE.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_handle) - STRING - SQL baseline handle containing the plan to alter (e.g., 'SQL_46ada9aadcbb946e').
+-- &2 (plan_name) - STRING - Baseline plan name to alter (e.g., 'SQLID_auy3f5g7da1_2481688974').
+-- &3 (fixed) - STRING - Target FIXED attribute value ('YES' or 'NO').
+-- &4 (enabled) - STRING - Target ENABLED attribute value ('YES' or 'NO').
+--
+-- OUTPUT DESCRIPTION:
+-- Executes two DBMS_SPM.ALTER_SQL_PLAN_BASELINE calls to update FIXED and ENABLED attributes for the specified plan.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I set a SQL baseline plan as fixed or not fixed?
+-- How can I enable or disable a specific SQL baseline plan?
+-- Which SQL handle and plan name are being altered?
+-- Did attribute updates for FIXED and ENABLED execute successfully?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : alter_sql_plan_from_baseline.sql SQL_46ada9aadcbb946e SQLID_auy3f5g7da1_2481688974 YES YES
+-- #############################################################################################################
+--
 set serveroutput on
 set sqlblanklines on
 set feedback off

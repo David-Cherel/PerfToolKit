@@ -1,17 +1,27 @@
--- parm_mods.sql
+-- #############################################################################################################
+-- FILE: parameters_mods.sql
+-- #############################################################################################################
 --
--- Shows all parameters (including hidden) that have been modified. 
--- Uses the lag function so that a single record is returned for each change.
--- It uses AWR data - so only snapshots still in the database will be included.
+-- PURPOSE:
+-- Lists AWR-recorded initialization parameter value changes over time (including hidden parameters), showing previous and new values per instance/container and snapshot.
 --
--- The script prompts for a parameter name (which can be wild carded).
--- Leaving the parameter name blank matches any parameter (i.e. it will show all changes).
--- Calculated hidden parameters (those that start with two underscores like "__shared_pool_size") 
--- will not be displayed unless requested with a Y.
+-- INPUT PARAMETERS:
+-- None (script currently reports all detected changes; no substitution variable required).
 --
--- Kerry Osborne
+-- OUTPUT DESCRIPTION:
+-- One result set of parameter changes with instance, container, snapshot, time, parameter name, old value, and new value; output is spooled to parameters_mods.log.
 --
--- Note: I got this idea from Jeff White.
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which initialization parameters changed over the retained AWR period?
+-- When did each parameter value change occur?
+-- What were the previous and new values for each change?
+-- On which instance/container did each parameter change happen?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : parameters_mods.sql
+-- #############################################################################################################
 --
 spool parameters_mods.log
 set linesize 180

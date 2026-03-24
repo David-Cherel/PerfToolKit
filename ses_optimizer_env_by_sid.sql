@@ -1,16 +1,27 @@
 -- #############################################################################################################
--- Session Optimizer Environment by SID
---
--- Purpose:
---   Display NAME, VALUE, ISDEFAULT, SQL_FEATURE from V$SES_OPTIMIZER_ENV for one SID.
---
--- Usage:
---   @ses_optimizer_env_by_sid.sql <SID>
---
--- Example:
---   @ses_optimizer_env_by_sid.sql 123
+-- FILE: ses_optimizer_env_by_sid.sql
 -- #############################################################################################################
-
+--
+-- PURPOSE:
+-- Displays optimizer environment settings for a specific session SID from V$SES_OPTIMIZER_ENV, including parameter value, default flag, and related SQL feature context.
+--
+-- INPUT PARAMETERS:
+-- &1 (sid_in) - NUMBER - Session SID to inspect optimizer environment values (e.g., 123).
+--
+-- OUTPUT DESCRIPTION:
+-- One result set listing optimizer environment NAME, VALUE, ISDEFAULT, and SQL_FEATURE for the provided SID; output is spooled to ses_optimizer_env_by_sid.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- What optimizer environment parameters are active for a given SID?
+-- Which optimizer settings differ from default for this session?
+-- Which SQL features are associated with optimizer environment entries for this SID?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : ses_optimizer_env_by_sid.sql 123
+-- #############################################################################################################
+--
 set pages 9999
 set lines 220
 set verify off

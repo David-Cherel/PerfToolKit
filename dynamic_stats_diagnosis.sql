@@ -1,20 +1,30 @@
 -- #############################################################################################################
--- Dynamic Statistics diagnosis for one SQL_ID + CHILD_NUMBER
---
--- Purpose:
---   1) Assess whether the cursor plan note reports dynamic statistics usage
---      (example: "dynamic statistics used: dynamic sampling (level=2)")
---   2) Extract dynamic sampling level from DBMS_XPLAN note text
---   3) Correlate with session optimizer environment values from V$SES_OPTIMIZER_ENV
---      via V$SESSION + V$SQL
---
--- Usage:
---   @dynamic_stats_diagnosis.sql <SQL_ID> <CHILD_NUMBER>
---
--- Example:
---   @dynamic_stats_diagnosis.sql cm1fyt76dwbkb 0
+-- FILE: dynamic_stats_diagnosis.sql
 -- #############################################################################################################
-
+--
+-- PURPOSE:
+-- Diagnoses dynamic statistics usage for a SQL_ID/child cursor by reading DBMS_XPLAN note text, extracting sampling level, and correlating results with session optimizer environment values.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+-- &2 (child_no) - NUMBER - Child cursor number to analyze (e.g., 0).
+--
+-- OUTPUT DESCRIPTION:
+-- Multiple result sets: cursor context, plan note lines indicating dynamic stats/sampling, extracted dynamic sampling level, active-session optimizer environment values, and session-vs-note correlation summary; output spooled to dynamic_stats_diagnosis.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Did this cursor use dynamic statistics according to DBMS_XPLAN notes?
+-- What dynamic sampling level is reported in the plan note?
+-- What is the current session optimizer_dynamic_sampling value for sessions using this SQL child?
+-- Do session optimizer settings align with plan note sampling level?
+-- Are there active sessions currently executing the analyzed SQL_ID/child?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : dynamic_stats_diagnosis.sql cm1fyt76dwbkb 0
+-- #############################################################################################################
+--
 set pages 9999
 set lines 260
 set long 1000000

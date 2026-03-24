@@ -1,15 +1,29 @@
 -- #############################################################################################################
--- Displays all plan hash values and performance kpi's for any queries related to a table  
--- It scans all history from AWR tables
--- Allows to detect performance changes for that SQL, and determine approximatively the time of change
+-- FILE: awr_plan_change_on_object.sql
 -- #############################################################################################################
--- object_name := &&1
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : awr_plan_change_on_object.sql S_LOY_TXN 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+--
+-- PURPOSE:
+-- Analyzes AWR history for SQL statements referencing a specific object name, showing plan hash performance evolution and summary metrics to detect plan changes and regressions linked to that object.
+--
+-- INPUT PARAMETERS:
+-- &1 (object_name) - STRING - Object name (table/index/etc.) used to filter SQL plans in AWR (e.g., 'S_LOY_TXN').
+--
+-- OUTPUT DESCRIPTION:
+-- Two result sets: (1) snapshot-level metrics for SQL_ID/PLAN_HASH_VALUE linked to the object; (2) summary by SQL_ID and PLAN_HASH_VALUE with first/last seen, executions, and elapsed-time spread. Output spooled to awr_plan_change_on_object.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL statements touching this object changed plans over time in AWR?
+-- What plan hash values were used for object-related SQL statements?
+-- Which SQL_ID/plan combinations show potential performance regression?
+-- When were specific plans first and last observed for object-related SQL?
+-- How variable is average elapsed time per SQL_ID/plan for this object?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : awr_plan_change_on_object.sql S_LOY_TXN
+-- #############################################################################################################
+--
 set pages 9999
 set lines 220
 set verify off

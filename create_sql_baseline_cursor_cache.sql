@@ -1,19 +1,34 @@
--- ########################################
--- creation SQL baseline from cursor cache
--- ########################################
--- sql_id := &&1
--- plan_hash_value := &&2
--- fixed := &&3
--- enabled := &&4
+-- #############################################################################################################
+-- FILE: create_sql_baseline_cursor_cache.sql
+-- #############################################################################################################
 --
--- WARNING :  This script will scan the latest Baselines created in the last 4 seconds
--- WARNING :  to rename the plan in this format : SQLID_<SQL_ID>_<PLAN_HASH_VALUE>
--- WARNING :  Therefore it is not possible to execute in parallel this SQL File on various sessions
+-- PURPOSE:
+-- Creates a SQL Plan Baseline from cursor cache for a given SQL_ID and PLAN_HASH_VALUE, optionally sets FIXED and ENABLED flags, then renames the created baseline to SQLID_<SQL_ID>_<PLAN_HASH_VALUE>.
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : create_sql_baseline_cursor_cache.sql cm1fyt76dwbkb 2481688974 NO YES 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - Target SQL_ID from cursor cache (e.g., 'cm1fyt76dwbkb').
+-- &2 (plan_hash_value) - NUMBER - Target execution plan hash value from cursor cache (e.g., 2481688974).
+-- &3 (fixed) - STRING - Baseline fixed flag ('YES' or 'NO').
+-- &4 (enabled) - STRING - Baseline enabled flag ('YES' or 'NO').
+--
+-- OUTPUT DESCRIPTION:
+-- Creates and renames a SQL baseline, prints DBMS_SPM return codes and creation details through DBMS_OUTPUT, and exits SQL*Plus after undefining substitution variables.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I create a SQL Plan Baseline from cursor cache for a specific SQL_ID?
+-- How can I load a specific plan hash value into SQL Plan Management?
+-- Can I set FIXED and ENABLED attributes during baseline creation?
+-- What return code did DBMS_SPM.LOAD_PLANS_FROM_CURSOR_CACHE produce?
+-- What return code did DBMS_SPM.ALTER_SQL_PLAN_BASELINE produce?
+-- How can I rename the newly created baseline to SQLID_<SQL_ID>_<PLAN_HASH_VALUE>?
+-- Was the SQL Plan Baseline successfully created for the requested SQL_ID and plan hash value?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : create_sql_baseline_cursor_cache.sql cm1fyt76dwbkb 2481688974 YES YES
+-- #############################################################################################################
+--
 
 set feedback off
 set sqlblanklines on

@@ -1,21 +1,34 @@
--- ####################################################################
--- creation SQL baseline from AWR (SQL_ID and plan hash value)
--- ####################################################################
--- sql_id := &&1
--- plan_hash_value := &&2
--- fixed := &&3
--- enabled := &&4
-
--- WARNING :  This script will scan the latest Baselines created in the last 4 seconds
--- WARNING :  to rename the plan in this format : SQLID_<SQL_ID>_<PLAN_HASH_VALUE>
--- WARNING :  Therefore it is not possible to execute in parallel this SQL File on various sessions
+-- #############################################################################################################
+-- FILE: create_sql_baseline_awr.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : create_sql_baseline_awr.sql cm1fyt76dwbkb 2481688974 YES YES 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-
+-- PURPOSE:
+-- Creates a SQL Plan Baseline from AWR for a specified SQL_ID and PLAN_HASH_VALUE, loads it through a temporary SQL tuning set, renames the baseline, and optionally sets FIXED and ENABLED attributes.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - Target SQL_ID to import from AWR (e.g., 'cm1fyt76dwbkb').
+-- &2 (plan_hash_value) - NUMBER - Target execution plan hash value from AWR (e.g., 2481688974).
+-- &3 (fixed) - STRING - Baseline fixed flag ('YES' or 'NO').
+-- &4 (enabled) - STRING - Baseline enabled flag ('YES' or 'NO').
+--
+-- OUTPUT DESCRIPTION:
+-- Creates and renames a SQL baseline (default name pattern SQLID_<SQL_ID>_<PLAN_HASH_VALUE>), prints DBMS_OUTPUT progress/status, and drops the temporary SQL tuning set CREATE_BASELINE_AWR at script end.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I create a SQL baseline from AWR for a specific SQL_ID and plan hash value?
+-- Can I import an historical AWR plan into SQL Plan Management?
+-- How can I mark a newly created baseline as fixed?
+-- How can I control whether the created baseline is enabled?
+-- What baseline name will be assigned after creation?
+-- Can I rename the created baseline to SQLID_<SQL_ID>_<PLAN_HASH_VALUE> automatically?
+-- Did baseline creation and rename complete successfully?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : create_sql_baseline_awr.sql cm1fyt76dwbkb 2481688974 YES YES
+-- #############################################################################################################
+--
 
 set serveroutput on
 set sqlblanklines on

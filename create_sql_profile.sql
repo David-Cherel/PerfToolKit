@@ -1,12 +1,32 @@
 -- #############################################################################################################
--- Create SQL Profile from SQL Tuning Advisor task
--- Enhanced: validation, safer SQL*Plus runtime, explicit force_match handling
+-- FILE: create_sql_profile.sql
 -- #############################################################################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : create_sql_profile.sql MY_TUNING_TASK MY_SQL_PROFILE YES
---           create_sql_profile.sql MY_TUNING_TASK MY_SQL_PROFILE NO
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+--
+-- PURPOSE:
+-- Creates or replaces a SQL Profile from a SQL Tuning Advisor task using DBMS_SQLTUNE.ACCEPT_SQL_PROFILE, with input validation, configurable FORCE_MATCH behavior, and post-creation profile detail reporting.
+--
+-- INPUT PARAMETERS:
+-- &1 (task_name) - STRING - SQL Tuning Advisor task name containing the recommendation to accept.
+-- &2 (profile_name) - STRING - Name for the SQL Profile to create or replace.
+-- &3 (force_match) - STRING - Optional flag ('YES' or 'NO'); controls force matching behavior (default YES when null).
+--
+-- OUTPUT DESCRIPTION:
+-- Validates inputs, creates/replaces the SQL Profile, writes execution output to create_sql_profile.log, prints DBMS_OUTPUT confirmation, and returns profile details (NAME, CATEGORY, STATUS, timestamps, FORCE_MATCHING).
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I create a SQL Profile from a SQL Tuning Advisor task?
+-- How can I replace an existing SQL Profile with a new accepted recommendation?
+-- How can I control FORCE_MATCH behavior when creating a SQL Profile?
+-- Did SQL Profile creation complete successfully?
+-- What are the resulting attributes of the created SQL Profile?
+-- When was the created SQL Profile last modified?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : create_sql_profile.sql TASK_12345 PROFILE_SQLID_CM1FYT76DWBKB YES
+-- #############################################################################################################
+--
 
 set pages 9999
 set lines 220

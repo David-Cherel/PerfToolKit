@@ -1,21 +1,34 @@
--- ##########################################################
--- export SQL Set 
--- ##########################################################
--- sql_set_name := &&1
--- table_name := &&2
--- table_owner := &&3
--- tablespace := &&4
--- exp_file_name := &&5
-
-
+-- #############################################################################################################
+-- FILE: export_sql_set.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : export_sql_set.sql my_SQL_SET1 STAGING_PERF OLAP USERS exp_perftool.dmp 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
--- Logfile here : Directory DATA_PUMP_DIR/perftool_exp.log
--- Dumpfile here : Directory DATA_PUMP_DIR/&&5 (parameter 5)
-
+-- PURPOSE:
+-- Exports a SQL Tuning Set by packing it into a staging table and exporting that table with Data Pump to a dump file for transfer or later import.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_set_name) - STRING - SQL Tuning Set name to export (e.g., 'MY_SQL_SET1').
+-- &2 (table_name) - STRING - Staging table name used for packing the SQL set.
+-- &3 (table_owner) - STRING - Owner/schema of the staging table.
+-- &4 (tablespace) - STRING - Tablespace for staging table creation.
+-- &5 (exp_file_name) - STRING - Data Pump dump filename to generate in DATA_PUMP_DIR (e.g., 'exp_perftool.dmp').
+--
+-- OUTPUT DESCRIPTION:
+-- Creates SQL set staging table, packs SQL set content, exports staging table with Data Pump, writes progress to export_sql_baseline.log and perftool_exp.log, then drops staging table and reports output paths.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I export a SQL Tuning Set to a dump file?
+-- Which SQL set name is being exported?
+-- Which staging table is used for SQL set export?
+-- Where are Data Pump dump and log files written?
+-- Did Data Pump export complete successfully?
+-- How can I clean up staging table objects after export?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : export_sql_set.sql MY_SQL_SET1 STAGING_PERF OLAP USERS exp_perftool.dmp
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

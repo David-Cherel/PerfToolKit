@@ -1,15 +1,30 @@
 -- #############################################################################################################
--- Displays all plan hash values and performance kpi's for a SQL_ID 
--- It scans all history from AWR tables
--- Allows to detect performance changes for that SQL, and determine approximatively the time of change
+-- FILE: awr_plan_change.sql
 -- #############################################################################################################
--- sql_id := &&1
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : awr_plan_change.sql cm1fyt76dwbkb 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+--
+-- PURPOSE:
+-- Analyzes AWR history for a SQL_ID to identify plan hash changes and performance evolution over time, and lists other SQL_IDs sharing the same force matching signature.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze in AWR history (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+--
+-- OUTPUT DESCRIPTION:
+-- Three result sets: (1) snapshot-level plan performance history, (2) summary by PLAN_HASH_VALUE (first/last seen, executions, elapsed-time spread), (3) SQL statements with same FORCE_MATCHING_SIGNATURE and their performance metrics.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which plan hash values were used over time for this SQL_ID in AWR?
+-- When did plan-related performance change for this SQL_ID?
+-- Which plan hash value shows best or worst average elapsed time?
+-- How variable is elapsed time per plan hash value?
+-- Are there other SQL_IDs with the same force matching signature?
+-- What is the performance profile of signature-related SQL statements?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : awr_plan_change.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
 set pages 9999
 set lines 220
 set verify off

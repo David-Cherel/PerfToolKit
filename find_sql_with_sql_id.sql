@@ -1,12 +1,30 @@
 -- #############################################################################################################
--- Find SQL Query in in Shared Pool (Library Cache) and displays KPI's 
--- Accept a sql_id as inputs (prompted)
--- Display : SQL_ID, CHILD, IS_OBSOLETE, plan_hash, EXECS, AVG_ETIME, AVG_LIO, avg_cpu_time, SQL_TEXT
--- Allows to show performance KPI's for that SQL_ID and plan_hash_value 
+-- FILE: find_sql_with_sql_id.sql
 -- #############################################################################################################
-
-
 --
+-- PURPOSE:
+-- Displays library cache cursor details and performance metrics for a specific SQL_ID from V$SQL, including child cursors, plan hash values, activity timestamps, and average execution/I/O/CPU indicators.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze in library cache (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set listing SQL_ID child cursors with obsolete flag, last active time, force matching signature, plan hash, executions, average elapsed time, average physical/logical I/O, average CPU time, and SQL text; output spooled.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which child cursors currently exist in library cache for a given SQL_ID?
+-- What plan hash values are associated with the SQL_ID?
+-- Which child cursors are obsolete versus active?
+-- What are average elapsed time, I/O, and CPU metrics for each child cursor?
+-- When was each child cursor last active?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : find_sql_with_sql_id.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
+
 define sql_id ='&1'
 set pages 9999
 set lines 220

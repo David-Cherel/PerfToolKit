@@ -1,12 +1,30 @@
 -- #############################################################################################################
--- Find SQL Query in AWR Reports and displays KPI's 
--- Accept a sql_id as inputs (prompted)
--- Display : snap_id, inst_id, begin_interval_time, SQL_ID, plan_hash_value , EXECS ,	AVG_ETIME ,	AVG_LIO , avg_cpu_time
--- Allows to show performance KPI's for that SQL_ID and plan_hash_value 
+-- FILE: find_sql_with_sql_id_awr.sql
 -- #############################################################################################################
-
-
 --
+-- PURPOSE:
+-- Analyzes AWR history for a specific SQL_ID, showing snapshot-level performance metrics and a plan-hash summary to identify execution behavior and elapsed-time variability over time.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze in AWR history (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+--
+-- OUTPUT DESCRIPTION:
+-- Two result sets: (1) snapshot-level AWR metrics per instance/plan hash (execs, avg elapsed time, I/O, CPU); (2) plan hash summary with first/last seen, total executions, min/max avg elapsed time, and spread percentage. Output spooled.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How did performance for this SQL_ID evolve across AWR snapshots?
+-- Which plan hash values were used for this SQL_ID in AWR?
+-- What are average elapsed time, I/O, and CPU metrics by snapshot?
+-- When was each plan hash first and last seen?
+-- Which plan hash shows the largest elapsed-time variability?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : find_sql_with_sql_id_awr.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
+
 define sql_id ='&1'
 set pages 9999
 set lines 220

@@ -1,13 +1,28 @@
--- ##########################################################
--- Show SQL Baselines one plan  from SQL plan name input
--- ##########################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : show_sql_baselines_sql_plan.sql SQLID_cm1fyt76dwbkb_2481688974  
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-
+-- #############################################################################################################
+-- FILE: show_sql_baselines_with_SQLID_old.sql
+-- #############################################################################################################
+--
+-- PURPOSE:
+-- Displays SQL Plan Baseline details for an input PLAN_NAME (legacy variant), including SQL handle, plan id/hash, SQL text, status flags, and verification/execution timestamps.
+--
+-- INPUT PARAMETERS:
+-- &1 (plan_name) - STRING - SQL Plan Baseline plan name filter (e.g., 'SQLID_cm1fyt76dwbkb_2481688974').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set containing SQL_HANDLE, PLAN_NAME, PLAN_HASH_VALUE (from SQLOBJ$ PLAN_ID), SQL_TEXT (truncated), ENABLED, ACCEPTED, FIXED, LAST_VERIFIED, and LAST_EXECUTED.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which baseline entries match a given plan name in this legacy view script?
+-- What SQL handle and plan hash/plan id are associated with the input plan name?
+-- Is the matching baseline enabled, accepted, or fixed?
+-- When was the matching baseline last verified and last executed?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : show_sql_baselines_with_SQLID_old.sql SQLID_cm1fyt76dwbkb_2481688974
+-- #############################################################################################################
+--
 set lines 160
 set pages 999
 col sql_text for a100 trunc

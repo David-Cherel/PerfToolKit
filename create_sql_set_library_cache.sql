@@ -1,17 +1,30 @@
--- ################################################################################################
--- Create SQL Set from Library cache  
--- It will capture all plans without "ranking_measure" 
--- there is no selection criteria except that it will exclude SYS, 
--- ORACLE_OCM and ORDSYS as a parsing schema. 
--- ################################################################################################
--- SQL_Set_Name := &&1
-
+-- #############################################################################################################
+-- FILE: create_sql_set_library_cache.sql
+-- #############################################################################################################
 --
+-- PURPOSE:
+-- Creates a SQL Tuning Set from current library cache statements, excluding selected system schemas, and loads captured SQL/plans with full attributes for later tuning, analysis, or baseline management operations.
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : create_sql_set_library_cache.sql my_sal_set 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+-- INPUT PARAMETERS:
+-- &1 (sql_set_name) - STRING - Name of the SQL Tuning Set to create from library cache content.
+--
+-- OUTPUT DESCRIPTION:
+-- Creates and loads the SQL tuning set, prints DBMS_OUTPUT execution context and total number of plans loaded, and exits after undefining SQL*Plus variables.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I create a SQL Tuning Set from current library cache SQL?
+-- How can I capture library cache SQL while excluding system schemas?
+-- How many plans were loaded into the created SQL set?
+-- Can I include recursive SQL when building a SQL set from library cache?
+-- What SQL set name was used for the library cache capture?
+-- Did SQL set creation and load complete successfully?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : create_sql_set_library_cache.sql MY_SQLSET_LIBCACHE
+-- #############################################################################################################
+--
 
 set feedback off
 set sqlblanklines on

@@ -1,12 +1,29 @@
 -- #############################################################################################################
--- Drop SQL Profile
--- Enhanced: validation, safer SQL*Plus runtime, post-action verification
+-- FILE: drop_sql_profile.sql
 -- #############################################################################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : drop_sql_profile.sql MY_SQL_PROFILE
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+--
+-- PURPOSE:
+-- Drops a SQL Profile by name using DBMS_SQLTUNE.DROP_SQL_PROFILE, with input validation, safe SQL*Plus runtime settings, and post-drop verification query against DBA_SQL_PROFILES.
+--
+-- INPUT PARAMETERS:
+-- &1 (profile_name) - STRING - SQL Profile name to drop (e.g., 'MY_SQL_PROFILE').
+--
+-- OUTPUT DESCRIPTION:
+-- Validates input, drops the SQL Profile, writes execution output to drop_sql_profile.log, prints DBMS_OUTPUT confirmation, and displays verification query results (expected zero row after drop).
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I drop a SQL Profile by name?
+-- Is PROFILE_NAME input provided and valid before execution?
+-- Did DBMS_SQLTUNE.DROP_SQL_PROFILE complete successfully?
+-- Does the SQL Profile still exist after the drop operation?
+-- Where can I review the SQL Profile drop execution log?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : drop_sql_profile.sql MY_SQL_PROFILE
+-- #############################################################################################################
+--
 set pages 9999
 set lines 220
 set long 1000000

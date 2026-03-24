@@ -1,19 +1,30 @@
 -- #############################################################################################################
--- Adaptive Plan diagnosis from SQL_ID
---
--- Purpose:
---   1) Display full adaptive plan (including inactive operations marked with '-')
---   2) Analyze STATISTICS COLLECTOR branches to identify likely objects/predicates
---      involved in cardinality misestimates
---
--- Usage:
---   @adaptive_plan_sqlid_diagnosis.sql <SQL_ID> [CHILD_NUMBER]
---
--- Examples:
---   @adaptive_plan_sqlid_diagnosis.sql 4r3harjun4dvz
---   @adaptive_plan_sqlid_diagnosis.sql 4r3harjun4dvz 0
+-- FILE: adaptive_plan_sqlid_diagnosis.sql
 -- #############################################################################################################
-
+--
+-- PURPOSE:
+-- Diagnoses adaptive execution plan behavior for a SQL_ID (optionally a child cursor), showing full adaptive plan and analyzing STATISTICS COLLECTOR branches to identify likely cardinality misestimate suspects.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to diagnose for adaptive plan behavior (13 alphanumeric characters, e.g., '4r3harjun4dvz').
+-- &2 (child_no) - NUMBER - Optional child cursor number; if null, most recently active child is selected.
+--
+-- OUTPUT DESCRIPTION:
+-- Multiple result sets: adaptive parameter status, full DBMS_XPLAN adaptive plan, STATISTICS COLLECTOR nodes, branch object/predicate analysis, and ranked misestimate suspects by A/E ratio; output spooled to adaptive_plan_sqlid_diagnosis.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Is optimizer adaptive plan functionality enabled for this environment?
+-- What adaptive plan (including inactive branches) was generated for this SQL_ID?
+-- Which STATISTICS COLLECTOR nodes drove adaptive branch decisions?
+-- Which objects and predicates are most likely involved in cardinality misestimates?
+-- Which branch operations show the highest actual-to-estimated row divergence?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : adaptive_plan_sqlid_diagnosis.sql 4r3harjun4dvz 0
+-- #############################################################################################################
+--
 set pages 9999
 set lines 260
 set long 1000000

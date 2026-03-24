@@ -1,20 +1,31 @@
--- ################################################################
--- swap bad plan with good plan with SQL baseline from cursor cache
--- ################################################################
--- sql_id_to_fix := &&1
--- bad_plan_hash_value := &&2
--- sql_id_with_good_plan := &&3
--- good_plan_hash_value := &&4
-
+-- #############################################################################################################
+-- FILE: swap_good_bad_plan_sql_baseline_cursor_cache.sql
+-- #############################################################################################################
 --
--- WARNING :  This script will scan the latest Baselines created in the last 4 seconds
--- WARNING :  to rename the plan in this format : SQLID_<SQL_ID>_<PLAN_HASH_VALUE>
--- WARNING :  Therefore it is not possible to execute in parallel this SQL File on various sessions
+-- PURPOSE:
+-- Replaces a bad execution plan baseline with a good one by loading both from cursor cache, disabling/removing the bad plan, attaching and fixing the good plan, and renaming resulting baseline plan.
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : swap_good_bad_plan_sql_baseline.sql 4x6hkyd6r1d08 3284627250 8j3jyx070mvhd 2068817167 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+-- INPUT PARAMETERS:
+-- &1 (sql_id_to_fix) - STRING - SQL_ID currently using the bad plan to replace (e.g., '4x6hkyd6r1d08').
+-- &2 (bad_plan_hash_value) - NUMBER - Bad plan hash value to baseline then remove (e.g., 3284627250).
+-- &3 (sql_id_with_good_plan) - STRING - SQL_ID providing the good plan from cursor cache (e.g., '8j3jyx070mvhd').
+-- &4 (good_plan_hash_value) - NUMBER - Good plan hash value to load as fixed/enabled (e.g., 2068817167).
+--
+-- OUTPUT DESCRIPTION:
+-- Performs baseline swap workflow with DBMS_SPM load/alter/drop calls, logs return codes and status messages, and writes execution trace to swap_good_bad_plan_sql_baseline_cursor_cache.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I replace a bad plan baseline with a good plan from cursor cache?
+-- Can I load a bad plan as disabled and then attach a good fixed plan to the same SQL handle?
+-- Did DBMS_SPM load/alter/drop operations succeed during the plan swap process?
+-- What final baseline plan name and SQL handle are produced after the swap?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : swap_good_bad_plan_sql_baseline_cursor_cache.sql 4x6hkyd6r1d08 3284627250 8j3jyx070mvhd 2068817167
+-- #############################################################################################################
+--
 spool swap_good_bad_plan_sql_baseline_cursor_cache.log
 
 set feedback off

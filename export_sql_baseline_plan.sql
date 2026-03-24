@@ -1,21 +1,34 @@
--- ######################################################
--- export a unique SQL baseline Plan from SPM repository
--- ######################################################
--- plan_name := &&1
--- table_name := &&2
--- table_owner := &&3
--- tablespace := &&4
--- exp_file_name := &&5
-
-
+-- #############################################################################################################
+-- FILE: export_sql_baseline_plan.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : export_sql_baseline.sql SQLID_auy3f5g7da1_2481688974 STAGING_PERF OLAP USERS exp_perftool.dmp 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
--- Logfile here : Directory DATA_PUMP_DIR/perftool_exp.log
--- Dumpfile here : Directory DATA_PUMP_DIR/&&5 (parameter 5)
-
+-- PURPOSE:
+-- Exports one specific SQL Plan Baseline plan by PLAN_NAME by packing it into a staging table and exporting that table through Data Pump to a dump file.
+--
+-- INPUT PARAMETERS:
+-- &1 (plan_name) - STRING - SQL Plan Baseline plan name to export (e.g., 'SQLID_auy3f5g7da1_2481688974').
+-- &2 (table_name) - STRING - Staging table name used to pack the selected baseline plan.
+-- &3 (table_owner) - STRING - Owner/schema of the staging table.
+-- &4 (tablespace) - STRING - Tablespace for staging table creation.
+-- &5 (exp_file_name) - STRING - Data Pump dump filename to generate in DATA_PUMP_DIR (e.g., 'exp_perftool.dmp').
+--
+-- OUTPUT DESCRIPTION:
+-- Creates staging table, packs the selected baseline plan, exports staging table with Data Pump, writes progress to export_sql_baseline.log and perftool_exp.log, then drops staging table.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I export a single SQL Plan Baseline by plan name?
+-- Which plan name is being exported?
+-- Which staging table is used during export?
+-- Where are the Data Pump dump and log files generated?
+-- Did the single-plan export job complete successfully?
+-- How can I clean up staging objects after export?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : export_sql_baseline_plan.sql SQLID_auy3f5g7da1_2481688974 STAGING_PERF OLAP USERS exp_perftool.dmp
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

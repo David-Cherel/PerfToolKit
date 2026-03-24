@@ -1,24 +1,29 @@
 -- #############################################################################################################
--- Author:      Kerry Osborne
--- SQL script to attempt to find SQL statements with plan instability.
--- Usage:       This scripts prompts for two values, both of which can be left blank.
---
---              min_stddev: the minimum "normalized" standard deviation between plans
---                          (the default is 2)
---
---              min_etime:  only include statements that have an avg. etime > this value
---                          (the default is .1 second)
---
---             Updated to handle very long running SQL statements that cross snapshots.
---
--- See http://kerryosborne.oracle-guy.com/2008/10/unstable-plans/ for more info.
+-- FILE: unstable_plans.sql
 -- #############################################################################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
---           unstable_plans.sql min_stddev min_etime
--- Example : unstable_plans.sql 2 0.1 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+--
+-- PURPOSE:
+-- Identifies SQL statements with potential execution-plan instability in AWR by comparing average elapsed time across plans and ranking SQL_IDs by normalized standard deviation.
+--
+-- INPUT PARAMETERS:
+-- &1 (min_stddev) - NUMBER - Optional minimum normalized stddev threshold between plans (e.g., 2 or 2.5).
+-- &2 (min_etime) - NUMBER - Optional minimum maximum average elapsed time threshold in seconds (e.g., 0.1).
+--
+-- OUTPUT DESCRIPTION:
+-- One ranked result set of unstable SQL candidates with SQL_ID, executions, min/max avg elapsed time, normalized stddev, and elapsed-time spread percentage; output spooled to unstable_plans.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL_IDs show significant elapsed-time instability across execution plans?
+-- What is the normalized variability (NORM_STDDEV) for each SQL_ID?
+-- Which SQL statements exceed minimum elapsed-time and variability thresholds?
+-- How large is elapsed-time spread between best and worst plans for each SQL_ID?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : unstable_plans.sql 2 0.1
+-- #############################################################################################################
+--
 set pages 9999
 set lines 180
 set verify off

@@ -1,17 +1,32 @@
--- ########################################
--- creation SQL Patch from cursor cache
--- ########################################
--- sql_id := &&1
--- hint := &&2
--- patchname := &&3
-
-
+-- #############################################################################################################
+-- FILE: create_sql_patch.sql
+-- #############################################################################################################
 --
+-- PURPOSE:
+-- Creates a SQL Patch for a specified SQL_ID using provided optimizer hint text and patch name through SYS.DBMS_SQLDIAG.CREATE_SQL_PATCH, and logs execution output to create_sql_patch.log.
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : create_sql_patch.sql cm1fyt76dwbkb SQLPatch12345 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - Target SQL_ID for patch creation (e.g., 'cm1fyt76dwbkb').
+-- &2 (hint_text) - STRING - Optimizer hint text to embed in the SQL Patch (e.g., '/*+ INDEX(table index_name) */').
+-- &3 (patch_name) - STRING - Name to assign to the created SQL Patch (e.g., 'SQLPatch12345').
+--
+-- OUTPUT DESCRIPTION:
+-- Executes SQL Patch creation, prints return code and confirmation messages through DBMS_OUTPUT, and writes the run output to create_sql_patch.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I create a SQL Patch for a specific SQL_ID?
+-- How can I apply custom optimizer hints through SQL Patch?
+-- What patch name is assigned to the created SQL Patch?
+-- Did DBMS_SQLDIAG.CREATE_SQL_PATCH return successfully?
+-- Was the SQL Patch created for the intended SQL_ID?
+-- Where can I review the SQL Patch creation output log?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : create_sql_patch.sql cm1fyt76dwbkb "/*+ INDEX(T IDX_T1) */" SQLPATCH_TEST_01
+-- #############################################################################################################
+--
 
 set feedback off
 set sqlblanklines on

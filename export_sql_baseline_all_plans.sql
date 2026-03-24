@@ -1,21 +1,34 @@
--- ##########################################################
--- export All SQL Plans from SQL baseline from SPM repository
--- ##########################################################
--- sql_handle := &&1
--- table_name := &&2
--- table_owner := &&3
--- tablespace := &&4
--- exp_file_name := &&5
-
-
+-- #############################################################################################################
+-- FILE: export_sql_baseline_all_plans.sql
+-- #############################################################################################################
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : export_sql_baseline_all_plans.sql SQL_auy3f51688974 STAGING_PERF OLAP USERS exp_perftool.dmp 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
--- Logfile here : Directory DATA_PUMP_DIR/perftool_exp.log
--- Dumpfile here : Directory DATA_PUMP_DIR/&&5 (parameter 5)
-
+-- PURPOSE:
+-- Exports all plans for a specific SQL handle from SQL Plan Baselines by packing them into a staging table and exporting that table through Data Pump to a dump file.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_handle) - STRING - SQL handle whose baseline plans are exported (e.g., 'SQL_auy3f51688974').
+-- &2 (table_name) - STRING - Staging table name used to pack baselines.
+-- &3 (table_owner) - STRING - Owner/schema of the staging table.
+-- &4 (tablespace) - STRING - Tablespace for staging table creation.
+-- &5 (exp_file_name) - STRING - Data Pump dump filename to generate in DATA_PUMP_DIR (e.g., 'exp_perftool.dmp').
+--
+-- OUTPUT DESCRIPTION:
+-- Creates staging table, packs baseline plans for the SQL handle, exports staging table with Data Pump, logs execution to export_sql_baseline.log and perftool_exp.log, then drops staging table.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I export all baseline plans for one SQL handle?
+-- Which SQL handle is being exported?
+-- Which staging table is used for baseline packing?
+-- Where are the Data Pump dump and log files generated?
+-- Did Data Pump export complete successfully?
+-- How can I clean up the staging table after export?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : export_sql_baseline_all_plans.sql SQL_auy3f51688974 STAGING_PERF OLAP USERS exp_perftool.dmp
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

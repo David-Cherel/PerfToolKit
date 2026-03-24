@@ -1,12 +1,33 @@
--- ##########################################################
--- Show SQL Baselines one plan  from SQL plan name input
--- ##########################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : show_sql_baselines_sql_plan.sql SQLID_cm1fyt76dwbkb_2481688974  
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- #############################################################################################################
+-- FILE: show_sql_baselines_sql_plan.sql
+-- #############################################################################################################
+--
+-- PURPOSE:
+-- Displays SQL Plan Baselines filtered by an input PLAN_NAME, returning baseline identifiers, SQL text excerpt, status flags, and verification/execution timestamps to inspect one specific baseline plan or matching plan name pattern.
+--
+-- INPUT PARAMETERS:
+-- &1 (plan_name) - STRING - SQL Plan Baseline plan name filter (e.g., 'SQLID_cm1fyt76dwbkb_2481688974').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set containing SQL_HANDLE, PLAN_NAME, SQL_TEXT (truncated), ENABLED, ACCEPTED, FIXED, LAST_VERIFIED, and LAST_EXECUTED for baselines matching the provided plan name.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL Plan Baseline entries match a given plan name?
+-- What SQL handle is associated with the provided plan name?
+-- Is the matching baseline enabled?
+-- Is the matching baseline accepted?
+-- Is the matching baseline fixed?
+-- What SQL text corresponds to the matching baseline?
+-- When was the matching baseline last verified?
+-- When was the matching baseline last executed?
+-- Are there multiple baseline entries matching the provided plan name pattern?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : show_sql_baselines_sql_plan.sql SQLID_cm1fyt76dwbkb_2481688974
+-- #############################################################################################################
+--
 
 set lines 160
 set pages 999

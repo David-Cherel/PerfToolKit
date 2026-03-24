@@ -1,14 +1,29 @@
--- ########################################
--- Drop SQL Plan from SPM repository
--- ########################################
--- plan_name := &&1
-
-
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : drop_sql_plan.sql SQLID_auy3f5g7da1_2481688974  
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+-- #############################################################################################################
+-- FILE: drop_sql_plan.sql
+-- #############################################################################################################
+--
+-- PURPOSE:
+-- Drops a specific SQL Plan Baseline by PLAN_NAME from the SQL Plan Management repository using DBMS_SPM.DROP_SQL_PLAN_BASELINE.
+--
+-- INPUT PARAMETERS:
+-- &1 (plan_name) - STRING - Baseline plan name to drop (e.g., 'SQLID_auy3f5g7da1_2481688974').
+--
+-- OUTPUT DESCRIPTION:
+-- Executes SQL Plan drop operation, prints DBMS_OUTPUT status/return count, and writes execution output to drop_sql_plan.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I drop a specific SQL Plan Baseline by plan name?
+-- Which plan name is being targeted for baseline removal?
+-- How many plans were dropped by DBMS_SPM.DROP_SQL_PLAN_BASELINE?
+-- Did SQL plan drop complete successfully?
+-- Where can I review the SQL plan drop output log?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : drop_sql_plan.sql SQLID_auy3f5g7da1_2481688974
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

@@ -1,21 +1,27 @@
-----------------------------------------------------------------------------------------
+-- #############################################################################################################
+-- FILE: monitor_sql.sql
+-- #############################################################################################################
 --
--- File name:   monitor_sql.sql
+-- PURPOSE:
+-- Creates a SQL Patch with MONITOR hint for a specified SQL_ID using DBMS_SQLDIAG.CREATE_SQL_PATCH to force SQL Monitoring for that statement.
 --
--- Purpose:     Prompts for a sql_id and creates a patch with the monitor hint
--
--- Author:      Kerry Osborne
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID of statement in shared pool to patch with MONITOR hint (e.g., 'cm1fyt76dwbkb').
 --
--- Usage:       This scripts prompts for one value.
+-- OUTPUT DESCRIPTION:
+-- Executes SQL Patch creation and prints created patch name/confirmation via DBMS_OUTPUT.
 --
---              sql_id: the sql_id of the statement to attach the patch to 
---                      (the statement must be in the shared pool)
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- How can I force SQL Monitoring for a specific SQL_ID?
+-- Was a MONITOR SQL Patch created successfully for this SQL_ID?
+-- What is the name of the created monitor patch?
+-- REM EMBEDDINGS END
 --
---              
---              See kerryosborne.oracle-guy.com for additional information.
------------------------------------------------------------------------------------------ 
-
-
+-- #############################################################################################################
+-- EXAMPLE : monitor_sql.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
 define sql_id = '&1' 
 
 

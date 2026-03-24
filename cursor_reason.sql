@@ -1,16 +1,27 @@
--- ########################################
--- DPC for displaying Cursor-Not-Shared Reason
--- ########################################
--- sql_id := &&1
-
+-- #############################################################################################################
+-- FILE: cursor_reason.sql
+-- #############################################################################################################
 --
-
+-- PURPOSE:
+-- Displays cursor not-shared reasons for a SQL_ID by extracting V$SQL_SHARED_CURSOR XML reason details and aggregating them per child cursor.
 --
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : cursor_reason.sql cm1fyt76dwbkb
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze for child cursor non-sharing reasons (e.g., 'cm1fyt76dwbkb').
+--
+-- OUTPUT DESCRIPTION:
+-- One result set with SQL_ID, CHILD_NUMBER, and aggregated non-sharing reason text for each child cursor.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Why were multiple child cursors created for this SQL_ID?
+-- What non-sharing reasons are recorded for each child cursor?
+-- Which child cursors share the same or different non-sharing causes?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : cursor_reason.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
 set feedback off
 set sqlblanklines on
 set serveroutput on

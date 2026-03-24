@@ -1,12 +1,29 @@
 -- #############################################################################################################
--- Get execution plan from Library Cache with SQL_ID as input
--- Enhanced: validation, safer SQL*Plus runtime, contextual summary, actionable outputs
+-- FILE: get_plan.sql
 -- #############################################################################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : get_plan.sql cm1fyt76dwbkb 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+--
+-- PURPOSE:
+-- Retrieves execution plan information from library cache for a SQL_ID, including cursor performance summary and detailed DBMS_XPLAN output with runtime statistics and outline/adaptive details.
+--
+-- INPUT PARAMETERS:
+-- &1 (sql_id) - STRING - SQL_ID to analyze in library cache (13 alphanumeric characters, e.g., 'cm1fyt76dwbkb').
+--
+-- OUTPUT DESCRIPTION:
+-- Two result sets: (1) child cursor summary with plan hash and average performance metrics; (2) DBMS_XPLAN.DISPLAY_CURSOR output (ALLSTATS LAST + outline/binds/notes/adaptive). Output is spooled to get_plan.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- What execution plan is currently used in library cache for this SQL_ID?
+-- Which child cursors exist and how do their performance metrics compare?
+-- What are average elapsed time, CPU time, logical I/O, and physical I/O per child cursor?
+-- What runtime row-source statistics are shown in DBMS_XPLAN for this SQL_ID?
+-- Are outline hints, bind peeking details, notes, or adaptive plan information available?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : get_plan.sql cm1fyt76dwbkb
+-- #############################################################################################################
+--
 set pages 9999
 set lines 220
 set long 1000000

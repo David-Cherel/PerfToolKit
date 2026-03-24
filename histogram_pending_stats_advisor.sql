@@ -1,21 +1,33 @@
 -- #############################################################################################################
--- Histogram advisor using SYS.COL_USAGE$ + dictionary stats
--- Goal:
---   1) Describe potential data skew and predicate usage for one column
---   2) Show missing / weak stats indicators
---   3) Propose command to gather histogram as PENDING (unpublished) stats
---   4) Provide test workflow with optimizer_use_pending_statistics=TRUE
---
--- Usage:
---   @histogram_pending_stats_advisor.sql <OWNER> <TABLE_NAME> <COLUMN_NAME> [APPLY_PENDING]
---
--- Example (advice only):
---   @histogram_pending_stats_advisor.sql SH SALES AMOUNT_SOLD NO
---
--- Example (apply pending stats):
---   @histogram_pending_stats_advisor.sql SH SALES AMOUNT_SOLD YES
+-- FILE: histogram_pending_stats_advisor.sql
 -- #############################################################################################################
-
+--
+-- PURPOSE:
+-- Advises and optionally applies pending histogram statistics workflow for a target table column, using column stats and SYS.COL_USAGE$ evidence to support skew diagnosis and controlled validation.
+--
+-- INPUT PARAMETERS:
+-- &1 (owner_name) - STRING - Schema owner of target table (e.g., 'SH').
+-- &2 (table_name) - STRING - Target table name (e.g., 'SALES').
+-- &3 (column_name) - STRING - Target column name (e.g., 'AMOUNT_SOLD').
+-- &4 (apply_pending) - STRING - Optional YES/Y or NO/N; when YES, gathers pending (unpublished) stats.
+--
+-- OUTPUT DESCRIPTION:
+-- Multiple advisory sections: column skew/stats indicators, predicate usage from COL_USAGE$, missing/weak stats checks, generated DBMS_STATS commands, optional pending gather execution, pending stats visibility, and validation workflow guidance.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Does this column show skew indicators that justify histogram investigation?
+-- Is workload evidence (predicate usage) present for this column?
+-- Are stats missing, stale, or histogram-free for the target column/table?
+-- What DBMS_STATS commands should be used for pending histogram testing?
+-- Were pending stats gathered and visible for the target table?
+-- How should pending-vs-non-pending plan behavior be compared safely?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : histogram_pending_stats_advisor.sql SH SALES AMOUNT_SOLD YES
+-- #############################################################################################################
+--
 set pages 9999
 set lines 220
 set verify off

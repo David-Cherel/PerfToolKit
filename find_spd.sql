@@ -1,16 +1,28 @@
 -- #############################################################################################################
--- Find SQL plan directives associated with a schema's objects
--- 
+-- FILE: find_spd.sql
 -- #############################################################################################################
-
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
--- Example : find_spd.sql myuser 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
--- 
 --
+-- PURPOSE:
+-- Lists SQL Plan Directives associated with a specified schema from DBA_SQL_PLAN_DIRECTIVES and DBA_SQL_PLAN_DIR_OBJECTS, and provides a summary of directive/object and column-level links.
 --
+-- INPUT PARAMETERS:
+-- &1 (schema) - STRING - Schema owner to analyze for SQL Plan Directives (e.g., 'MYUSER').
+--
+-- OUTPUT DESCRIPTION:
+-- Two result sets: (1) detailed directive listing by object/column with directive metadata; (2) summary counts of directives and links for the selected schema. Output is spooled to find_spd.log.
+--
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL Plan Directives exist for a specific schema?
+-- Which objects and columns are associated with each directive?
+-- What directive type, state, and reason are recorded?
+-- How many distinct directives are linked to the schema?
+-- How many links are object-level versus column-level?
+-- REM EMBEDDINGS END
+--
+-- #############################################################################################################
+-- EXAMPLE : find_spd.sql MYUSER
+-- #############################################################################################################
 --
 set pages 9999
 set lines 220
