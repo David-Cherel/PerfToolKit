@@ -239,7 +239,7 @@ from   plan_data
 where  '&&rt_stats_available' = 'YES'
 and    (access_predicates is not null or filter_predicates is not null or object_name is not null)
 and    greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+                (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
 order by mismatch_factor desc, id;
 
 prompt
@@ -268,7 +268,7 @@ with plan_data as (
   select *
   from   plan_data
   where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
   and    predicate_text is not null
 ), extracted as (
   select h.id,
@@ -338,7 +338,7 @@ with plan_data as (
                   object_type
   from   plan_data
   where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
   and    object_owner is not null
   and    object_name is not null
   and    object_type in ('TABLE','INDEX','TABLE PARTITION','INDEX PARTITION','TABLE SUBPARTITION','INDEX SUBPARTITION')
@@ -367,7 +367,7 @@ with plan_data as (
                   object_type
   from   plan_data
   where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
   and    object_owner is not null
   and    object_name is not null
   and    object_type in ('TABLE','INDEX','TABLE PARTITION','INDEX PARTITION','TABLE SUBPARTITION','INDEX SUBPARTITION')
@@ -428,7 +428,7 @@ with plan_data as (
                   object_name  as table_name
   from   plan_data
   where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
   and    object_owner is not null
   and    object_name is not null
   and    object_type like 'TABLE%'), 
@@ -436,7 +436,7 @@ with plan_data as (
                   object_name  as index_name
   from   plan_data
   where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
   and    object_owner is not null
   and    object_name is not null
   and    object_type like 'INDEX%')
@@ -486,7 +486,7 @@ with plan_data as (
   select *
   from   plan_data
   where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
 ), extracted as (
   select h.id,
          upper(regexp_substr(h.predicate_text, '"([^"]+)"\."([^"]+)"', 1, level, null, 1)) alias_name,
@@ -602,6 +602,7 @@ with plan_data as (
          options,
          object_owner,
          object_name,
+         object_type,
          cardinality est_rows,
          last_output_rows a_rows,
          nvl(access_predicates, filter_predicates) as predicate_text
@@ -613,32 +614,39 @@ with plan_data as (
   from   plan_data
   where  '&&rt_stats_available' = 'YES'
   and    greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
-                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 2
+                  (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
+), hotspot_objects as (
+  select distinct object_owner,
+                  object_name,
+                  object_type
+  from   hotspots
+  where  object_owner is not null
+  and    object_name is not null
+  and    object_type in ('TABLE','INDEX','TABLE PARTITION','INDEX PARTITION','TABLE SUBPARTITION','INDEX SUBPARTITION')
 )
 select 'HOTSPOT ID '||id||' -> mismatch='||
        round(greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
                       (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)),2)||
        ', OP='||operation||' '||nvl(options,'')||
-       ', OBJ='||nvl(object_owner||'.'||object_name,'(none)') as recommendation
+       ', OBJ='||nvl(object_owner||'.'||object_name,'(none)')||
+       ', TYPE='||nvl(object_type,'(none)') as recommendation
 from hotspots
 union all
 select 'COMMAND: exec dbms_stats.set_table_prefs('''||object_owner||''','''||object_name||''',''PUBLISH'',''FALSE'');'
-from   (select distinct object_owner, object_name
-        from hotspots
-        where object_owner is not null
-        and object_name is not null)
+from   hotspot_objects
+where  object_type like 'TABLE%'
 union all
 select 'COMMAND: exec dbms_stats.gather_table_stats('''||object_owner||''','''||object_name||''', method_opt=>''FOR ALL COLUMNS SIZE AUTO'', cascade=>dbms_stats.auto_cascade, no_invalidate=>false);'
-from   (select distinct object_owner, object_name
-        from hotspots
-        where object_owner is not null
-        and object_name is not null)
+from   hotspot_objects
+where  object_type like 'TABLE%'
 union all
 select 'COMMAND TEMPLATE (extended stats): select dbms_stats.create_extended_stats('''||object_owner||''','''||object_name||''',''(<col1>,<col2>)'') from dual;'
-from   (select distinct object_owner, object_name
-        from hotspots
-        where object_owner is not null
-        and object_name is not null)
+from   hotspot_objects
+where  object_type like 'TABLE%'
+union all
+select 'COMMAND: exec dbms_stats.gather_index_stats('''||object_owner||''','''||object_name||''', no_invalidate=>false);'
+from   hotspot_objects
+where  object_type like 'INDEX%'
 order by 1;
 
 prompt
@@ -651,39 +659,64 @@ begin
     dbms_output.put_line('APPLY_PENDING=YES -> gathering pending stats on hotspot objects...');
 
     for r in (
-      with hotspots as (
-        select distinct object_owner, object_name
+      with plan_data as (
+        select object_owner,
+               object_name,
+               object_type,
+               cardinality est_rows,
+               last_output_rows a_rows
         from   v$sql_plan_statistics_all
         where  sql_id = '&&sql_id'
         and    child_number = to_number('&&chosen_child')
-        and    greatest((nvl(last_output_rows,0)+1)/(nvl(cardinality,0)+1),
-                       (nvl(cardinality,0)+1)/(nvl(last_output_rows,0)+1)) >= 2
+      ), hotspots as (
+        select distinct object_owner,
+                        object_name,
+                        object_type
+        from   plan_data
+        where  greatest((nvl(a_rows,0)+1)/(nvl(est_rows,0)+1),
+                        (nvl(est_rows,0)+1)/(nvl(a_rows,0)+1)) >= 5
         and    object_owner is not null
         and    object_name is not null
       )
-      select object_owner, object_name
-      from hotspots
+      select h.object_owner,
+             h.object_name,
+             h.object_type
+      from   hotspots h
+      where  h.object_type in ('TABLE','INDEX')
+      order by 1, 3, 2
     ) loop
       begin
-        dbms_stats.set_table_prefs(
-          ownname => r.object_owner,
-          tabname => r.object_name,
-          pname   => 'PUBLISH',
-          pvalue  => 'FALSE'
-        );
+        if r.object_type = 'TABLE' then
+          dbms_stats.set_table_prefs(
+            ownname => r.object_owner,
+            tabname => r.object_name,
+            pname   => 'PUBLISH',
+            pvalue  => 'FALSE'
+          );
 
-        dbms_stats.gather_table_stats(
-          ownname       => r.object_owner,
-          tabname       => r.object_name,
-          method_opt    => 'FOR ALL COLUMNS SIZE AUTO',
-          cascade       => dbms_stats.auto_cascade,
-          no_invalidate => false
-        );
+          dbms_stats.gather_table_stats(
+            ownname       => r.object_owner,
+            tabname       => r.object_name,
+            method_opt    => 'FOR ALL COLUMNS SIZE AUTO',
+            cascade       => dbms_stats.auto_cascade,
+            no_invalidate => false
+          );
 
-        dbms_output.put_line('  OK: pending stats gathered for '||r.object_owner||'.'||r.object_name);
+          dbms_output.put_line('  OK: pending table stats gathered for '||r.object_owner||'.'||r.object_name||' (TYPE='||r.object_type||')');
+        elsif r.object_type = 'INDEX' then
+          dbms_stats.gather_index_stats(
+            ownname       => r.object_owner,
+            indname       => r.object_name,
+            no_invalidate => false
+          );
+
+          dbms_output.put_line('  OK: index stats gathered for '||r.object_owner||'.'||r.object_name||' (TYPE='||r.object_type||')');
+        else
+          dbms_output.put_line('  INFO: skipped unsupported object type for apply step -> '||r.object_owner||'.'||r.object_name||' (TYPE='||r.object_type||')');
+        end if;
       exception
         when others then
-          dbms_output.put_line('  WARN: could not gather pending stats for '||r.object_owner||'.'||r.object_name||' -> '||sqlerrm);
+          dbms_output.put_line('  WARN: could not gather stats for '||r.object_owner||'.'||r.object_name||' (TYPE='||r.object_type||') -> '||sqlerrm);
       end;
     end loop;
   else
@@ -702,6 +735,7 @@ with implicated_tables as (
   and    child_number = to_number('&&chosen_child')
   and    object_owner is not null
   and    object_name is not null
+  and    object_type like 'TABLE%'
 )
 select p.owner,
        p.table_name
@@ -729,6 +763,7 @@ begin
     dbms_output.put_line('     -- run same SQL and compare elapsed/cpu/buffer gets/rowsource A-rows vs E-rows');
     dbms_output.put_line('3) If validated, publish (manual command, not executed by this script):');
     dbms_output.put_line('     exec dbms_stats.publish_pending_stats(''<OWNER>'',''<TABLE_NAME>'');');
+    dbms_output.put_line('NOTE: Pending stats publication applies to table stats; index stats gathered directly are immediate.');
   end if;
 end;
 /

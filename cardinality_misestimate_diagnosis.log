@@ -183,20 +183,18 @@ INFO: real-time stats available -> generating advisory recommendations.
 
 
 RECOMMENDATION
-__________________________________________________________________________________________________________________________________________________________________________
+__________________________________________________________________________________________________________________________________________________________________
 COMMAND TEMPLATE (extended stats): select dbms_stats.create_extended_stats('HR','EMPLOYEES','(<col1>,<col2>)') from dual;
-COMMAND TEMPLATE (extended stats): select dbms_stats.create_extended_stats('HR','EMP_DEPARTMENT_IX','(<col1>,<col2>)') from dual;
+COMMAND: exec dbms_stats.gather_index_stats('HR','EMP_DEPARTMENT_IX', no_invalidate=>false);
 COMMAND: exec dbms_stats.gather_table_stats('HR','EMPLOYEES', method_opt=>'FOR ALL COLUMNS SIZE AUTO', cascade=>dbms_stats.auto_cascade, no_invalidate=>false);
-COMMAND: exec dbms_stats.gather_table_stats('HR','EMP_DEPARTMENT_IX', method_opt=>'FOR ALL COLUMNS SIZE AUTO', cascade=>dbms_stats.auto_cascade, no_invalidate=>false);
 COMMAND: exec dbms_stats.set_table_prefs('HR','EMPLOYEES','PUBLISH','FALSE');
-COMMAND: exec dbms_stats.set_table_prefs('HR','EMP_DEPARTMENT_IX','PUBLISH','FALSE');
-HOTSPOT ID 0 -> mismatch=107, OP=SELECT STATEMENT , OBJ=.
-HOTSPOT ID 1 -> mismatch=9345.8, OP=NESTED LOOPS , OBJ=.
-HOTSPOT ID 2 -> mismatch=9345.8, OP=NESTED LOOPS , OBJ=.
-HOTSPOT ID 4 -> mismatch=3.24, OP=INDEX RANGE SCAN, OBJ=HR.EMP_DEPARTMENT_IX
-HOTSPOT ID 5 -> mismatch=346.15, OP=TABLE ACCESS BY INDEX ROWID, OBJ=HR.EMPLOYEES
+HOTSPOT ID 0 -> mismatch=107, OP=SELECT STATEMENT , OBJ=., TYPE=(none)
+HOTSPOT ID 1 -> mismatch=9345.8, OP=NESTED LOOPS , OBJ=., TYPE=(none)
+HOTSPOT ID 2 -> mismatch=9345.8, OP=NESTED LOOPS , OBJ=., TYPE=(none)
+HOTSPOT ID 4 -> mismatch=3.24, OP=INDEX RANGE SCAN, OBJ=HR.EMP_DEPARTMENT_IX, TYPE=INDEX
+HOTSPOT ID 5 -> mismatch=346.15, OP=TABLE ACCESS BY INDEX ROWID, OBJ=HR.EMPLOYEES, TYPE=TABLE
 
-11 rows selected.
+9 rows selected.
 
 
 --- 8) Optional APPLY_PENDING execution (pending gather only; never publish) --
@@ -222,6 +220,7 @@ PL/SQL procedure successfully completed.
      -- run same SQL and compare elapsed/cpu/buffer gets/rowsource A-rows vs E-rows
 3) If validated, publish (manual command, not executed by this script):
      exec dbms_stats.publish_pending_stats('<OWNER>','<TABLE_NAME>');
+NOTE: Pending stats publication applies to table stats; index stats gathered directly are immediate.
 
 
 PL/SQL procedure successfully completed.
