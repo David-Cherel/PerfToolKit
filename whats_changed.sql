@@ -1,53 +1,35 @@
-
+-- #############################################################################################################
+-- FILE: whats_changed.sql
 -- #############################################################################################################
 --
--- File name:   whats_changed.sql
+-- PURPOSE:
+-- Identifies SQL statements whose average elapsed time changed significantly before versus after a reference date (SYSDATE-days_ago) using AWR history, returning slower/faster SQL candidates ranked by normalized variability and execution impact.
 --
--- Purpose:     Find statements that have significantly different elapsed time than before.
+-- INPUT PARAMETERS:
+-- &1 (days_ago) - NUMBER - Number of days back used as the before/after split point (e.g., 7)
+-- &2 (min_stddev) - NUMBER - Minimum normalized standard deviation threshold to keep significant changes (e.g., 2)
+-- &3 (min_etime) - NUMBER - Minimum average elapsed time (seconds) to filter out very fast SQL (e.g., 0.1)
 --
--- Author:      Kerry Osborne
+-- OUTPUT DESCRIPTION:
+-- One result set showing SQL_ID, executions, average elapsed time before/after split, percentage delta,
+-- normalized standard deviation, and a Faster/Slower label to highlight statements with meaningful performance change.
 --
--- Usage:       This scripts prompts for four values.
+-- QUESTIONS ADDRESSED BY THIS SCRIPT:
+-- REM EMBEDDINGS BEG
+-- Which SQL statements became significantly slower after a recent change window?
+-- Which SQL statements became significantly faster after a recent change window?
+-- What is the average elapsed time before and after the reference date for each SQL_ID?
+-- What percentage elapsed-time delta is observed per SQL_ID?
+-- Which SQL_IDs have the highest normalized variability in elapsed time?
+-- How many executions support the observed performance change for each SQL_ID?
+-- Which SQL statements exceed a minimum elapsed-time relevance threshold?
+-- What SQL statements should be prioritized for regression root-cause analysis?
+-- REM EMBEDDINGS END
 --
---              days_ago: how long ago was the change made that you wish to evaluate
---                        (this could easily be changed to a snap_id for more precision)
---
---              min_stddev: the minimum "normalized" standard deviation between plans
---                          (the default is 2 - which means twice as fast/slow)
---
---              min_etime:  only include statements that have an avg. etime > this value
---                          (the default is .1 second)
---
---
---              faster_slower: a flag to indicate if you want only Faster or Slower SQL
---                             (the default is both - use S% for slower and F% for faster)
---
--- Description: This scripts attempts to find statements with significantly different
---              average elapsed times per execution. It uses AWR data and computes a
---              normalized standard deviation between the average elapsed time per
---              execution before and after the date specified by the days_ago parameter.
---
---              The ouput includes the following:
---
---              SQL_ID - the sql_id of a statement that is in the shared pool (v$sqlarea)
---
---              EXECS - the total number of executions in the AWR tables
---
---              AVG_ETIME_BEFORE - the average elapsed time per execution before the REFERENCE_TIME
---
---              AVG_ETIME_AFTER - the average elapsed time per execution after  the REFERENCE_TIME
---
---              NORM_STDDEV - this is a normalized standard deviation (i.e. how many times slower/faster is it now)
---
--- See http://kerryosborne.oracle-guy.com for additional information.
-----------------------------------------------------------------------------------------
 -- #############################################################################################################
-
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
---           whats_changed.sql days_ago min_stddev min_etime
--- Example : whats_changed.sql 7 2 0.1 
--- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+-- EXAMPLE : whats_changed.sql 7 2 0.1
+-- #############################################################################################################
+--
 
 spool whats_changed.log
 

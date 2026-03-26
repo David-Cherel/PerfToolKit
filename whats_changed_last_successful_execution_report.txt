@@ -1,0 +1,57 @@
+WHATS_CHANGED.SQL - LAST SUCCESSFUL EXECUTION REPORT
+====================================================
+
+Execution Context
+-----------------
+- Script: /Users/davidcherel/Documents/Local_PerfToolKit/PerfToolKit/whats_changed.sql
+- Execution engine: perf-toolkit-mcp (tool: execute_sql_script)
+- Status: SUCCESS
+- Statement count: 2
+- Parameter values used:
+  - &1 (days_ago)   = 7
+  - &2 (min_stddev) = 2
+  - &3 (min_etime)  = 1
+
+Statement-Level Results
+-----------------------
+1) Statement #1
+   - Type: DML_OR_DDL (PL/SQL validation block)
+   - Rowcount: 0
+   - Outcome: Completed
+
+2) Statement #2
+   - Type: QUERY
+   - Output columns:
+     SQL_ID, EXECS, BEFORE_AVG_ETIME, AFTER_AVG_ETIME, DELTA_PCT, NORM_STDDEV, RESULT
+   - Returned rows: 3
+
+Top Findings
+------------
+1. SQL_ID: 8r13yasynfh61
+   - EXECS: 12
+   - BEFORE_AVG_ETIME: 1.3958523333333333
+   - AFTER_AVG_ETIME: 1487.6578636666666
+   - DELTA_PCT: 106477.0230948498
+   - NORM_STDDEV: 752.9062507092493
+   - RESULT: Slower
+
+2. SQL_ID: 44c8h21v4x42s
+   - EXECS: 7
+   - BEFORE_AVG_ETIME: 0.60671
+   - AFTER_AVG_ETIME: 1650.739137
+   - DELTA_PCT: 271980.42343129334
+   - NORM_STDDEV: 1923.192017582561
+   - RESULT: Slower
+
+3. SQL_ID: bkryyh4vf4p55
+   - EXECS: 7
+   - BEFORE_AVG_ETIME: 0.1332215
+   - AFTER_AVG_ETIME: 1980.461278
+   - DELTA_PCT: 1486492.8382430763
+   - NORM_STDDEV: 10511.09166106917
+   - RESULT: Slower
+
+Conclusion
+----------
+- The run identified 3 SQL statements with severe elapsed-time regression after the reference split date.
+- All returned candidates are classified as SLOWER and should be prioritized for plan/statistics change investigation.
