@@ -2,9 +2,9 @@
 
 Classification basis: **extended SQL header only** (primarily PURPOSE; INPUT/OUTPUT/QUESTIONS used for scope interpretation). No SQL code body analysis used in this catalogue refresh.
 
-- SQL files scanned in repository root: **80**
-- Services catalogued (compliant extended PURPOSE found): **79**
-- Files skipped (missing compliant extended PURPOSE header): **1**
+- SQL files scanned in repository root: **85**
+- Services catalogued (compliant extended PURPOSE found): **85**
+- Files skipped (missing compliant extended PURPOSE header): **0**
 
 ## DET — Detect slowdown and prioritize suspects
 
@@ -13,8 +13,10 @@ Classification basis: **extended SQL header only** (primarily PURPOSE; INPUT/OUT
 | `active_long_running_sql.sql` | Lists currently active long-running SQL from GV$SESSION and GV$SQL_MONITOR with elapsed time, wait class/event, blocking context, and execution progress to identify live SQL sessions causing immediate impact. |
 | `dbtime.old.sql` | Reports top AWR snapshot intervals by DB Time, with optional instance and snapshot-range filters, to identify busiest historical periods. |
 | `dbtime.sql` | Reports top AWR snapshot intervals by DB Time with optional instance and snapshot-range filters, helping identify busiest periods for targeted performance investigation. |
+| `lock_block_chain_triage.sql` | Builds a live blocking-tree triage report from GV$SESSION and GV$LOCK, exposing blocker SQL_ID, blocked-session wait impact, and chain depth to quickly prioritize lock contention during active incidents. |
 | `slow_sql_triage_workflow.sql` | Executes an end-to-end first-touch triage workflow for unknown slow SQL by combining slowdown scope, top SQL candidate ranking, and immediate diagnostic script hints into one standardized incident report. |
 | `sql_wait_profile_awr.sql` | Builds an AWR wait profile for a SQL_ID across a snapshot window, breaking down DB time by wait class, wait event, and CPU proxy to explain where execution time is spent and why the SQL is slow. |
+| `sql_wait_timeline_awr.sql` | Produces a time-bucketed AWR ASH wait timeline for one SQL_ID across an incident window, showing wait-event evolution and wait-class distribution (including CPU proxy) to isolate when and how slowdown behavior shifted. |
 | `top_sql_awr_window.sql` | Ranks top SQL statements in a selected AWR snapshot window by chosen KPI (elapsed time, CPU, logical I/O, physical I/O, executions), to quickly identify the most expensive SQL_ID candidates during a slowdown period. |
 | `unstable_plans.sql` | Identifies SQL statements with potential execution-plan instability in AWR by comparing average elapsed time across plans and ranking SQL_IDs by normalized standard deviation. |
 | `unstable_plans_statspack.sql` | Identifies SQL statements with potential execution-plan instability from Statspack data by comparing average elapsed time across plans and ranking SQL_IDs by normalized standard deviation. |
@@ -38,6 +40,7 @@ Classification basis: **extended SQL header only** (primarily PURPOSE; INPUT/OUT
 | SQL File | Service (from PURPOSE line) |
 |---|---|
 | `adaptive_plan_sqlid_diagnosis.sql` | Diagnoses adaptive execution plan behavior for a SQL_ID (optionally a child cursor), showing full adaptive plan and analyzing STATISTICS COLLECTOR branches to identify likely cardinality misestimate suspects. |
+| `ash_session_timeline.sql` | Produces a session-centric ASH timeline for one SID/SERIAL across a time window, exposing wait-event evolution, SQL_ID transitions, blocking context, and activity intensity to reconstruct incident behavior at session level. |
 | `cardinality_misestimate_diagnosis.sql` | Diagnoses cardinality misestimates for a SQL_ID from cursor cache by comparing estimated versus actual rows, identifying hotspot operations, correlating predicates/statistics health, and optionally gathering pending statistics for validation. |
 | `create_awr_snapshot.sql` | Creates an AWR snapshot using DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT to persist current performance data into AWR tables, helping preserve workload and execution plan information for later analysis. |
 | `cursor_reason.sql` | Displays cursor not-shared reasons for a SQL_ID by extracting V$SQL_SHARED_CURSOR XML reason details and aggregating them per child cursor. |
@@ -46,6 +49,7 @@ Classification basis: **extended SQL header only** (primarily PURPOSE; INPUT/OUT
 | `get_plan_awr.sql` | Retrieves execution plan details from AWR for a SQL_ID (optionally filtered by PLAN_HASH_VALUE), including historical performance summary and DBMS_XPLAN workload repository plan output. |
 | `get_plan_sql_baseline.sql` | Displays the execution plan stored in SQL Plan Baseline repository for a given baseline PLAN_NAME using DBMS_XPLAN.DISPLAY_SQL_PLAN_BASELINE. |
 | `get_plan_statspack.sql` | Displays execution plan lines from Statspack plan repository for a specified PLAN_HASH_VALUE using DBMS_XPLAN.DISPLAY on PERFSTAT.STATS$SQL_PLAN. |
+| `px_skew_diagnosis.sql` | Diagnoses live parallel execution imbalance for active workloads by correlating GV$PX_SESSION topology with recent GV$ACTIVE_SESSION_HISTORY samples, highlighting skew between PX slaves, QC context, and wait/resource asymmetry to prioritize remediation. |
 | `ses_optimizer_env_by_sid.sql` | Displays optimizer environment settings for a specific session SID from V$SES_OPTIMIZER_ENV, including parameter value, default flag, and related SQL feature context. |
 | `spd_sqlid_diagnosis.sql` | Diagnoses SQL Plan Directive relevance for a SQL_ID (optionally one child cursor), correlating plan objects with directives and showing related object/column statistics and extended stats metadata. |
 | `sql_exec_query.sql` | Enables execution statistics at session level, runs a sample query, and displays last cursor execution plan with allstats/note information for quick execution-plan diagnostics. |
@@ -61,6 +65,7 @@ Classification basis: **extended SQL header only** (primarily PURPOSE; INPUT/OUT
 | `create_sql_set_awr_snap.sql` | Creates a SQL Tuning Set from AWR snapshots within a specified snapshot range, excluding selected system schemas, and loads captured statements/plans for later analysis or baseline operations. |
 | `create_statspack_snapshot.sql` | Creates a Statspack snapshot using PERFSTAT.STATSPACK.SNAP to persist current performance statistics, helping preserve workload evidence and SQL execution context for later Statspack-based analysis. |
 | `find_sql_with_sql_id_awr.sql` | Analyzes AWR history for a specific SQL_ID, showing snapshot-level performance metrics and a plan-hash summary to identify execution behavior and elapsed-time variability over time. |
+| `incident_change_correlator.sql` | Correlates SQL regression signals for one SQL_ID across an incident window by combining snapshot performance and plan switches with AWR parameter modifications and related table statistics updates in one chronological analysis report. |
 | `parameters_mods.sql` | Lists AWR-recorded initialization parameter value changes over time (including hidden parameters), showing previous and new values per instance/container and snapshot. |
 | `plan_change_statspack.sql` | Analyzes Statspack history for a SQL_ID to display performance metrics by instance and plan hash value, helping identify plan-related performance differences. |
 | `restore_table_stats.sql` | Restores table statistics (including related column/index stats) to a specified historical timestamp using DBMS_STATS.RESTORE_TABLE_STATS. |
@@ -118,19 +123,16 @@ Classification basis: **extended SQL header only** (primarily PURPOSE; INPUT/OUT
 ## Coverage assessment for a complete SQL troubleshooting toolkit
 
 ### What is now well covered
-- **First-touch detection and triage**: `dbtime.sql`, `whats_changed.sql`, `unstable_plans.sql`, `top_sql_awr_window.sql`, `active_long_running_sql.sql`, `slow_sql_triage_workflow.sql`.
+- **First-touch detection and triage**: `dbtime.sql`, `whats_changed.sql`, `unstable_plans.sql`, `top_sql_awr_window.sql`, `active_long_running_sql.sql`, `slow_sql_triage_workflow.sql`, `lock_block_chain_triage.sql`, `sql_wait_timeline_awr.sql`.
 - **SQL identification paths**: SQL text/template search, signature matching, SQL_ID direct lookup, workload-source bridge (`session_sql_bridge.sql`).
-- **Root-cause diagnostics**: plan analysis, wait profile, ACS/cursor diagnostics, cardinality/stats feedback/dynamic stats, SPD checks.
+- **Root-cause diagnostics**: plan analysis, wait profile, session timeline, PX skew diagnostics, ACS/cursor diagnostics, cardinality/stats feedback/dynamic stats, SPD checks.
+- **Historical change correlation**: plan-change history, parameter-change tracking, stats history, and integrated incident correlation (`incident_change_correlator.sql`).
 - **Stabilization/remediation**: complete Baseline/Patch/Profile/STS lifecycle (create/show/alter/drop/export/import/swap).
 
 ### Remaining functional gaps (recommended next scripts)
-1. **Lock/Block chain SQL triage** (session blocking tree + blocker SQL_ID + wait impact).
-2. **SQL wait timeline** (time-bucketed wait-event evolution for one SQL_ID across incident window).
-3. **Incident change correlator** (single report correlating SQL regression with parameter changes, stats versions, and plan switches).
+1. **RAC Cache Fusion wait diagnostics** (GC current/cr hotspots and interconnect contention correlation).
 
 ## Skipped SQL files (non-compliant/missing extended PURPOSE)
 
-| SQL File | Reason |
-|---|---|
-| `sql_exec_template.sql` | missing extended PURPOSE header line |
+None. All SQL files currently include a compliant extended PURPOSE header.
 
