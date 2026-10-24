@@ -10,7 +10,7 @@
 -- &1 (patch_name) - STRING - SQL Patch name to drop (e.g., 'SQLPatch12345').
 --
 -- OUTPUT DESCRIPTION:
--- Executes SQL Patch deletion, prints confirmation messages through DBMS_OUTPUT, and writes output to create_sql_patch.log.
+-- Executes SQL Patch deletion, prints confirmation messages through DBMS_OUTPUT, and writes output to drop_sql_patch.log.
 --
 -- QUESTIONS ADDRESSED BY THIS SCRIPT:
 -- REM EMBEDDINGS BEG
